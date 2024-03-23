@@ -8,7 +8,7 @@ namespace CommonLayer.Models.ResponceDto
 {
     public class UserNotesResponce
     {
-        public int NoteId { get; set; }
+        public int UserNotesId { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
         public string Colour { get; set; }

@@ -32,10 +32,10 @@ namespace RepositaryLayer.Repositary.RepoImpl
             {
                 int? user = await GetUserIdByEmailAsync(Request.Email);
                 var query = @"
-                            INSERT INTO Collaboration (UserId, NoteId, CollaboratorEmail) 
-                            VALUES (@userId, @NoteId, @collaboratorEmail);
+                            INSERT INTO Collaboration (UserId, UserNotesId, CollaboratorEmail) 
+                            VALUES (@UserId, @UserNotesId, @CollaboratorEmail);
                             ";
-                Collaboration coll = new Collaboration { NoteId = NoteId, UserId = user.Value, CollaboratorEmail = Request.Email };
+                Collaboration coll = new Collaboration { UserNotesId = NoteId, UserId = user.Value, CollaboratorEmail = Request.Email };
 
                 //if (!IsValidEmail(Request.Email))
                 //{
@@ -109,6 +109,27 @@ namespace RepositaryLayer.Repositary.RepoImpl
         //    return Regex.IsMatch(email, pattern);
         //}
 
-    }
+        public async Task<IEnumerable<Collaboration>> GetCollaborators(int CollaborationId)
+        {
+            var query = $"SELECT * FROM Collaboration where CollaborationId={CollaborationId}";
+            using (var connection = _context.CreateConnection())
+            {
+                var collaborators = await connection.QueryAsync<Collaboration>(query);
+                return collaborators;
+            }
 
+        }
+
+        public async Task<bool> RemoveCollaborator(int CollaborationId)
+        {
+            var query = $"DELETE FROM Collaboration WHERE CollaborationId = {CollaborationId}";
+              using (var connection = _context.CreateConnection())
+                {
+                int rowsAffected = await connection.ExecuteAsync(query);
+                return rowsAffected > 0; 
+        }
+
+        }
+    }
 }
+

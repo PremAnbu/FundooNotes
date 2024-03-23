@@ -13,7 +13,7 @@ namespace RepositaryLayer.Entity
 
         public int UserId { get; set; }
 
-        public int NoteId { get; set; }
+        public int UserNotesId { get; set; }
 
         public string CollaboratorEmail { get; set; }
     }

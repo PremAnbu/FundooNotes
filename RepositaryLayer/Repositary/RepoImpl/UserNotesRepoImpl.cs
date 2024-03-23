@@ -18,10 +18,9 @@ namespace RepositaryLayer.Repositary.RepoImpl
     {
         private readonly DapperContext context;
         private readonly ILogger<UserNotesRepoImpl> _logger;
-
         public UserNotesRepoImpl(DapperContext context, ILogger<UserNotesRepoImpl> logger)
         {
-            context = context;
+            this.context = context;
             _logger = logger;
         }
         public async Task<IEnumerable<UserNotesResponce>> CreateUserNotes(UserNotes request)
@@ -56,7 +55,6 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 throw; // Re-throw the exception to maintain the original behavior
             }
         }
-
         public async Task<bool> DeleteNoteAsync(int noteId)
         {
             var deleteQuery = "DELETE FROM UserNotes WHERE UserNotesId = @NoteId";
@@ -66,7 +64,6 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 return rowsAffected > 0;
             }
         }
-
         public async Task<IEnumerable<UserNotesResponce>> GetAllNoteByIdAsync(int userId)
         {
             var selectQuery = "SELECT * FROM UserNotes WHERE UserId = @UserId";
@@ -94,40 +91,23 @@ namespace RepositaryLayer.Repositary.RepoImpl
             int? user = await GetUserIdByEmailAsync(updatedNote.Email);
             updatedNote.UserId = user.Value;
 
-            var selectQuery = "SELECT UserNotesId, Description, Title, Colour FROM UserNotes WHERE UserId = @UserId AND UserNotesId = @NoteId";
+            var selectQuery = "SELECT UserNotesId, Description, Title, Colour FROM UserNotes WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
 
-            var updateQuery = @"UPDATE UserNotes SET Description = @Description, 
-            Title = @Title, 
-            Colour = @Colour 
-            WHERE UserId = @UserId AND UserNotesId = @NoteId";
+            var updateQuery = $"UPDATE UserNotes SET Description = {updatedNote.Description}, Title = { updatedNote. Title}, Colour = {updatedNote.Colour} WHERE UserId = {updatedNote.UserId} AND UserNotesId = {updatedNote.UserNotesId}";
             string prevTitle, prevDescription, prevColour;
             try
             {
                 using (var connection = context.CreateConnection())
                 {
                     // Retrieve the current note details from the database
-                    var currentnote = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = user.Value, NoteId = noteId });
-
-
+                    var currentnote = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = user.Value, UserNotesId = noteId });
                     if (currentnote == null)
                     {
                         throw new FileNotFoundException("Note not found");
                     }
 
-                    // Store the previous values of the note
-                    prevTitle = currentnote.Title;
-                    prevDescription = currentnote.Description;
-                    prevColour = currentnote.Colour;
-
                     // Execute the update query with the provided parameters
-                    await connection.ExecuteAsync(updateQuery, new
-                    {
-                        Description = CheckInput(updatedNote.Description, prevDescription),
-                        Title = CheckInput(updatedNote.Title, prevTitle),
-                        Colour = CheckInput(updatedNote.Colour, prevColour),
-                        UserId = user.Value,
-                        NoteId = noteId
-                    });
+                    await connection.ExecuteAsync(updateQuery);
 
                     // Retrieve the updated note
                     var updatedNoteResponse = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = user.Value, NoteId = noteId });
@@ -144,11 +124,6 @@ namespace RepositaryLayer.Repositary.RepoImpl
 
 
         private object CheckInput(string description, string prevDescription)
-        {
-            throw new NotImplementedException();
-        }
-
-        Task<IEnumerable<UserNotesResponce>> IUserNotesRepo.CreateUserNotes(UserNotes request)
         {
             throw new NotImplementedException();
         }

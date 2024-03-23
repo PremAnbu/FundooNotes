@@ -9,6 +9,5 @@ namespace CommonLayer.Models.RequestDto
     public class CollaborationRequest
     {
         public string Email { get; set; }
-
     }
 }
