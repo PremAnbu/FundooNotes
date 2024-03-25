@@ -12,11 +12,10 @@ namespace RepositaryLayer.Repositary.RepoImpl
     {
         private readonly DapperContext context;
         private readonly ILogger<UserRepoImpl> _logger;
-
         public UserRepoImpl(DapperContext context, ILogger<UserRepoImpl> logger)
         {
            this. context = context;
-           this. _logger = logger;
+           _logger = logger;
         }
 
         public async Task<int> createUser(UserEntity entity)
@@ -33,7 +32,6 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 throw;
             }
         }
-
         public async Task<UserEntity> GetUserByEmail(string email)
         {
             try
@@ -48,7 +46,6 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 throw;
             }
         }
-
         public async Task<int> UpdatePassword(string mailid, string password)
         {
             try

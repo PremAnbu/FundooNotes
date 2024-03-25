@@ -31,55 +31,12 @@ namespace RepositaryLayer.Repositary.RepoImpl
             try
             {
                 int? user = await GetUserIdByEmailAsync(Request.Email);
-                var query = @"
-                            INSERT INTO Collaboration (UserId, UserNotesId, CollaboratorEmail) 
-                            VALUES (@UserId, @UserNotesId, @CollaboratorEmail);
-                            ";
+                var query = @"INSERT INTO Collaboration (UserId, UserNotesId, CollaboratorEmail) 
+                            VALUES (@UserId, @UserNotesId, @CollaboratorEmail)";
                 Collaboration coll = new Collaboration { UserNotesId = NoteId, UserId = user.Value, CollaboratorEmail = Request.Email };
-
-                //if (!IsValidEmail(Request.Email))
-                //{
-                //    throw new InvalidEmailFormatException("Invalid email format");
-                //}
-
-                //  var emailExistsQuery = @"SELECT COUNT(*) FROM register WHERE Email = @collaboratorEmail";
-
-                // var emailExistsParams = new { collaboratorEmail = Request.Email };
 
                 using (var connection = _context.CreateConnection())
                 {
-                    // int emailCount = await connection.ExecuteScalarAsync<int>(emailExistsQuery, emailExistsParams);
-
-                    //if (emailCount == 0)
-                    //{
-                    //    throw new NotFoundException($"Collaborator with email '{Request.Email}' Is Not A Registerd User please Register First and try Again.");
-                    //}
-                    // Check if table exists
-                    //bool tableExists = await connection.QueryFirstOrDefaultAsync<bool>(
-                    //    @"
-                    //    SELECT COUNT(*)
-                    //    FROM INFORMATION_SCHEMA.TABLES
-                    //    WHERE TABLE_NAME = 'Collaboration';
-                    //    "
-                    //);
-
-                    // Create table if it doesn't exist
-                    //if (!tableExists)
-                    //{
-                    //    await connection.ExecuteAsync(
-                    //        @"CREATE TABLE Collaboration (
-                    //            CollaborationId INT IDENTITY(1, 1) PRIMARY KEY,
-                    //            UserId INT,
-                    //            NoteId INT,
-                    //            CollaboratorEmail NVARCHAR(100),
-                    //            CONSTRAINT FK_UserId FOREIGN KEY (UserId) REFERENCES Users (UserId),
-                    //            CONSTRAINT FK_NoteId FOREIGN KEY (NoteId) REFERENCES Notes (NoteId),
-                    //            CONSTRAINT FK_CollaboratorEmail FOREIGN KEY (CollaboratorEmail) REFERENCES Users (Email)
-                    //        );"
-                    //    );
-                    //}
-
-                    // Insert collaborator
                     await connection.ExecuteAsync(query, coll);
                 }
                 _logger.LogInformation("Collaborator added successfully.");
@@ -88,7 +45,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while adding collaborator.");
-                throw; // Re-throw the exception to maintain the original behavior
+                throw; 
             }
         }
         private async Task<int?> GetUserIdByEmailAsync(string email)

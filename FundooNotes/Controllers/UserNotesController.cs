@@ -26,8 +26,8 @@ namespace FundooNotes.Controllers
         public async Task<IActionResult> UpdateNoteAsync(int noteId, [FromBody] UserNotesRequest updatedNote)
         {
             return Ok(await service.UpdateNoteAsync(noteId, updatedNote));
-
         }
+
         [HttpDelete("{noteId}")]
         public async Task<IActionResult> DeleteNoteAsync(int noteId)
         {

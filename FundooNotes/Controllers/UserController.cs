@@ -31,7 +31,6 @@ namespace FundooNotes.Controllers
             return Ok(await service.Login(Email, password)); 
         }
 
-
         [HttpPut("forgotpass/{Email}")]
         [UserExceptionHandlerFilter]
         public async Task<IActionResult> ChangePasswordRequest(String Email)
