@@ -52,7 +52,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while creating user notes.");
-                throw; // Re-throw the exception to maintain the original behavior
+                throw; 
             }
         }
         public async Task<bool> DeleteNoteAsync(int noteId)
@@ -88,45 +88,38 @@ namespace RepositaryLayer.Repositary.RepoImpl
 
         public async Task<UserNotesResponce> UpdateNoteAsync(int noteId, UserNotes updatedNote)
         {
-            int? user = await GetUserIdByEmailAsync(updatedNote.Email);
-            updatedNote.UserId = user.Value;
-
-            var selectQuery = "SELECT UserNotesId, Description, Title, Colour FROM UserNotes WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
-
-            var updateQuery = $"UPDATE UserNotes SET Description = {updatedNote.Description}, Title = { updatedNote. Title}, Colour = {updatedNote.Colour} WHERE UserId = {updatedNote.UserId} AND UserNotesId = {updatedNote.UserNotesId}";
-            string prevTitle, prevDescription, prevColour;
             try
             {
+                int? user = await GetUserIdByEmailAsync(updatedNote.Email);
+                updatedNote.UserId = user.Value;
+
+                var selectQuery = "SELECT UserNotesId, Description, Title, Colour FROM UserNotes WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
+
+                var updateQuery = "UPDATE UserNotes SET Description = @Description, Title = @Title, Colour = @Colour WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
+                _logger.LogInformation("Updating note...");
+
                 using (var connection = context.CreateConnection())
                 {
-                    // Retrieve the current note details from the database
-                    var currentnote = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = user.Value, UserNotesId = noteId });
-                    if (currentnote == null)
+                    var currentNote = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = user.Value, UserNotesId = noteId });
+                    if (currentNote == null)
                     {
+                        _logger.LogError("Note not found");
                         throw new FileNotFoundException("Note not found");
                     }
-
-                    // Execute the update query with the provided parameters
-                    await connection.ExecuteAsync(updateQuery);
-
+                    await connection.ExecuteAsync(updateQuery, updatedNote);
                     // Retrieve the updated note
-                    var updatedNoteResponse = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = user.Value, NoteId = noteId });
-
+                    var updatedNoteResponse = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = user.Value, UserNotesId = noteId });
+                    _logger.LogInformation("Note updated successfully.");
                     return updatedNoteResponse;
                 }
             }
             catch (Exception ex)
             {
-                // Handle other exceptions
-                throw new Exception("An error occurred in the repository layer", ex);
+                _logger.LogError(ex, "An error occurred in the repository layer");
+                throw; 
             }
         }
 
-
-        private object CheckInput(string description, string prevDescription)
-        {
-            throw new NotImplementedException();
-        }
 
         private async Task<int?> GetUserIdByEmailAsync(string email)
         {
@@ -134,7 +127,6 @@ namespace RepositaryLayer.Repositary.RepoImpl
 
             using (var connection = context.CreateConnection())
             {
-                // Use parameterized query to prevent SQL injection
                 var userId = await connection.QueryFirstOrDefaultAsync<int?>(selectQuery, new { Email = email });
                 return userId;
             }

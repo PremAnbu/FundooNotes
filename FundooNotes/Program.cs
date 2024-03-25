@@ -8,14 +8,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddSingleton<DapperContext>();
+
 builder.Services.AddScoped<IUserService, UserServiceImpl>();
+builder.Services.AddScoped<IUserRepo, UserRepoImpl>();
+
 builder.Services.AddScoped<ICollaborationService, CollaborationServiceImpl>();
+builder.Services.AddScoped<ICollaborationRepo, CollaborationRepoImpl>();
+
 builder.Services.AddScoped<IUserNotesService, UserNotesServiceImpl>();
 builder.Services.AddScoped<IUserNotesRepo, UserNotesRepoImpl>();
-builder.Services.AddScoped<IUserRepo, UserRepoImpl>();
-builder.Services.AddScoped<ICollaborationRepo, CollaborationRepoImpl>();
-builder.Services.AddScoped<IUserRepo, UserRepoImpl>();
-builder.Services.AddScoped<ICollaborationRepo, CollaborationRepoImpl>();
+
+builder.Services.AddScoped<INotesLabelRepo, NotesLabelRepoImpl>();
+builder.Services.AddScoped<INotesLabelService, NotesLabelServiceImpl>();
+
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

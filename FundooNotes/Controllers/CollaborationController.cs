@@ -28,11 +28,8 @@ namespace FundooNotes.Controllers
         [HttpGet("{CollaborationId}")]
         public async Task<IActionResult> GetCollaborator(int CollaborationId)
         {
-
             return Ok(await collaborationBL.GetCollaborators(CollaborationId));
-
         }
-
 
         [HttpDelete("RemoveCollaborator/{CollaborationId}")]
         public async Task<IActionResult> RemoveCollaborator(int CollaborationId)

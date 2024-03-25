@@ -36,8 +36,6 @@ namespace BuisinessLayer.service.serviceImpl
         }
         private String Encrypt(String password)
         {
-
-            
            
             byte[] passByte = Encoding.UTF8.GetBytes(password);
             return Convert.ToBase64String(passByte);
@@ -60,7 +58,6 @@ namespace BuisinessLayer.service.serviceImpl
                LastName= responce.UserLastName ,
                Email = responce.UserEmail,
                
-
             };
         }
 
