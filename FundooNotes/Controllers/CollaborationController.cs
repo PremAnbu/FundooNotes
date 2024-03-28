@@ -9,6 +9,7 @@ using System.Security.Claims;
 
 namespace FundooNotes.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CollaborationController : ControllerBase
@@ -22,7 +23,11 @@ namespace FundooNotes.Controllers
         [HttpPost]
         public async Task<IActionResult> AddCollaborator(int NoteId, [FromBody] CollaborationRequest request)
         { 
-            return Ok(await collaborationBL.AddCollaborator(NoteId, request));
+            var result=await collaborationBL.AddCollaborator(NoteId, request);
+            if (result)
+                return Ok("Collaboration added successfully.");
+            else
+                return BadRequest("Failed to add collaboration.");
         }
 
         [HttpGet("{CollaborationId}")]
@@ -34,7 +39,11 @@ namespace FundooNotes.Controllers
         [HttpDelete("RemoveCollaborator/{CollaborationId}")]
         public async Task<IActionResult> RemoveCollaborator(int CollaborationId)
         {
-             return Ok(await collaborationBL.RemoveCollaborator(CollaborationId));
+            var result = await collaborationBL.RemoveCollaborator(CollaborationId);
+            if (result)
+                return Ok("Collaborator removed successfully.");
+            else
+                return BadRequest("Failed to remove collaborator.");
         }
     }
 }

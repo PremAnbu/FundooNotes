@@ -1,11 +1,14 @@
 ﻿using Azure.Core;
 using BuisinessLayer.service.Iservice;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using RepositaryLayer.Entity;
 
 namespace FundooNotes.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class LabelsController : ControllerBase
@@ -17,21 +20,33 @@ namespace FundooNotes.Controllers
         }
 
         [HttpPost("{labelName}")]
-        public async Task<int> CreateNewLabel(string labelName)
+        public async Task<IActionResult> CreateNewLabel(string labelName)
         {
-           return await service.CreateNewLabel(labelName);
+           var result = await service.CreateNewLabel(labelName);
+            if (result==1)
+                return Ok("Label Created successfully.");
+            else
+                return BadRequest("Failed to add Label.");
         }
 
         [HttpPut("{labelName}/{newLabelName}")]
-        public async Task<int> UpdateLabelName(string labelName,string newLabelName)
+        public async Task<IActionResult> UpdateLabelName(string labelName,string newLabelName)
         {
-            return await service.UpdateLabelName(labelName,newLabelName);
+            var result=await service.UpdateLabelName(labelName,newLabelName);
+            if (result == 1)
+                return Ok("Label Name Updated  successfully.");
+            else
+                return BadRequest("Failed to Update  Label Name");
         }
 
         [HttpDelete("{labelName}")]
-        public async Task<int> DeleteLabel(string labelName)
+        public async Task<IActionResult> DeleteLabel(string labelName)
         {
-            return await service.DeleteLabel(labelName);
+            var result = await service.DeleteLabel(labelName);
+            if (result == 1)
+                return Ok("Label Deleted successfully.");
+            else
+                return BadRequest("Failed to Delete Label.");
         }
     }
 }

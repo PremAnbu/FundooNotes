@@ -57,7 +57,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
         }
         public async Task<bool> DeleteNoteAsync(int noteId)
         {
-            var deleteQuery = "DELETE FROM UserNotes WHERE UserNotesId = @NoteId";
+            var deleteQuery = "update UserNotes set IsDeleted=1 WHERE UserNotesId = @NoteId";
             using (var connection = context.CreateConnection())
             {
                 var rowsAffected = await connection.ExecuteAsync(deleteQuery, new { NoteId = noteId});
@@ -66,7 +66,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
         }
         public async Task<IEnumerable<UserNotesResponce>> GetAllNoteByIdAsync(int userId)
         {
-            var selectQuery = "SELECT * FROM UserNotes WHERE UserId = @UserId";
+            var selectQuery = "SELECT * FROM UserNotes WHERE UserId = @UserId and IsDeleted=0";
             using (var connection = context.CreateConnection())
             {
                 var notes = await connection.QueryAsync<UserNotesResponce>(selectQuery, new { UserId = userId });
@@ -78,9 +78,10 @@ namespace RepositaryLayer.Repositary.RepoImpl
         {
             int? user = await GetUserIdByEmailAsync(email);
             int userId = user.Value;
-            var selectQuery = "SELECT * FROM UserNotes WHERE UserId = @UserId";
+            var selectQuery = "SELECT * FROM UserNotes WHERE UserId = @UserId and IsDeleted=0";
             using (var connection = context.CreateConnection())
             {
+                Console.WriteLine("Ms sql Server database");
                 var notes = await connection.QueryAsync<UserNotesResponce>(selectQuery, new { UserId = userId });
                 return notes.Reverse().ToList();
             }
@@ -90,8 +91,8 @@ namespace RepositaryLayer.Repositary.RepoImpl
         {
             try
             {
-                int? user = await GetUserIdByEmailAsync(updatedNote.Email);
-                updatedNote.UserId = user.Value;
+                int? userId = await GetUserIdByEmailAsync(updatedNote.Email);
+                updatedNote.UserId = userId.Value;
 
                 var selectQuery = "SELECT UserNotesId, Description, Title, Colour FROM UserNotes WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
 
@@ -100,15 +101,19 @@ namespace RepositaryLayer.Repositary.RepoImpl
 
                 using (var connection = context.CreateConnection())
                 {
-                    var currentNote = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = user.Value, UserNotesId = noteId });
+                    var currentNote = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = userId.Value, UserNotesId = noteId });
                     if (currentNote == null)
                     {
                         _logger.LogError("Note not found");
                         throw new FileNotFoundException("Note not found");
                     }
-                    await connection.ExecuteAsync(updateQuery, updatedNote);
+
+                    await connection.ExecuteAsync(updateQuery, new { Description = updatedNote.Description,
+                        Title = updatedNote.Title, Colour = updatedNote.Colour,
+                        UserId = updatedNote.UserId, UserNotesId = noteId });
+
                     // Retrieve the updated note
-                    var updatedNoteResponse = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = user.Value, UserNotesId = noteId });
+                    var updatedNoteResponse = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = updatedNote.UserId, UserNotesId = noteId });
                     _logger.LogInformation("Note updated successfully.");
                     return updatedNoteResponse;
                 }
@@ -116,9 +121,10 @@ namespace RepositaryLayer.Repositary.RepoImpl
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred in the repository layer");
-                throw; 
+                throw;
             }
         }
+
 
 
         private async Task<int?> GetUserIdByEmailAsync(string email)
