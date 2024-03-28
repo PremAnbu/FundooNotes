@@ -8,11 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BuisinessLayer\BuisinessLayer.csproj" />
+    <ProjectReference Include="..\BuisinessLayer\BusinessLayer.csproj" />
     <ProjectReference Include="..\CommonLayer\CommonLayer.csproj" />
     <ProjectReference Include="..\RepositaryLayer\RepositaryLayer.csproj" />
   </ItemGroup>

@@ -20,10 +20,10 @@ namespace BuisinessLayer.MailSender
             System.Net.Mail.MailMessage mailMessage = new System.Net.Mail.MailMessage();
             try
             {
-                mailMessage.From = new System.Net.Mail.MailAddress("m_raghu@outlook.com", "FUNDOO NOTES");
+                mailMessage.From = new System.Net.Mail.MailAddress("PREMKUMAR03042002@outlook.com", "Premkumar@2002");
                 mailMessage.To.Add(ToMail);
                 mailMessage.Subject = "Change password for Fundoo Notes";
-                mailMessage.Body = "This is your otp please enter to change password "+otp;
+                mailMessage.Body = "This is your otp please enter to change password " + otp;
                 mailMessage.IsBodyHtml = true;
                 System.Net.Mail.SmtpClient smtpClient = new System.Net.Mail.SmtpClient("smtp-mail.outlook.com");
 
@@ -36,8 +36,8 @@ namespace BuisinessLayer.MailSender
                 // Enable SSL/TLS
                 smtpClient.EnableSsl = true;
 
-                string loginName = "m_raghu@outlook.com";
-                string loginPassword = "R@ghu2k01";
+                string loginName = "PREMKUMAR03042002@outlook.com";
+                string loginPassword = "Premkumar@2002";
 
                 System.Net.NetworkCredential networkCredential = new System.Net.NetworkCredential(loginName, loginPassword);
                 smtpClient.UseDefaultCredentials = false;
@@ -55,4 +55,4 @@ namespace BuisinessLayer.MailSender
             }
         }
     }
-    }
+}

@@ -87,7 +87,6 @@ namespace BuisinessLayer.service.serviceImpl
             }
 
         }
-
         public Task<String> ChangePasswordRequest(string Email)
         {
             try
@@ -108,9 +107,10 @@ namespace BuisinessLayer.service.serviceImpl
             }
             otp = generatedotp;
             mailid = Email;
+            Console.WriteLine(otp+" ,"+Email);
             MailSenderClass.sendMail(Email, generatedotp);
-            Console.WriteLine(otp);
-           return Task.FromResult("MailSent ✔️");
+            //Console.WriteLine(otp);
+           return Task.FromResult("MailSended Successfully ✔️");
             
         }
             
