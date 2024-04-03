@@ -11,7 +11,7 @@ using System.Text.Json;
 
 namespace FundooNotes.Controllers
 {
-    [Authorize]
+  //  [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserNotesController : ControllerBase
