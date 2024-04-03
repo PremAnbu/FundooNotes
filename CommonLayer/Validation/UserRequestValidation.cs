@@ -28,7 +28,6 @@ namespace CommonLayer.Validation
                         else
                         {
                             if (!Regex.IsMatch(valid.Password, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d!@#$%^&*]{8,16}$"))
-
                             {
                                 return new ValidationResult("Given Password is in correct Format");
                             }

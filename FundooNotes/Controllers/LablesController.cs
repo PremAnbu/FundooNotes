@@ -8,7 +8,7 @@ using RepositaryLayer.Entity;
 
 namespace FundooNotes.Controllers
 {
-    [Authorize]
+   // [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class LabelsController : ControllerBase

@@ -42,13 +42,9 @@ namespace BuisinessLayer.service.serviceImpl
 
         }
         private String Decrypt(String encryptedPass)
-        {
-           
+        {          
             byte[] passbyte=Convert.FromBase64String(encryptedPass);
-            String res= Encoding.UTF8.GetString(passbyte);
-           
-            return res;
-
+            return Encoding.UTF8.GetString(passbyte);   
         }
         private UserResponce MapToResponce(UserEntity responce)
         {
@@ -113,10 +109,6 @@ namespace BuisinessLayer.service.serviceImpl
            return Task.FromResult("MailSended Successfully ✔️");
             
         }
-            
-            
-        
-
         public Task<string> ChangePassword(string otp,string password)
         {
             if (otp.Equals(null))

@@ -9,24 +9,28 @@ using RepositaryLayer.Repositary.IRepo;
 using RepositaryLayer.Repositary.RepoImpl;
 using System.Text;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
-
+using Confluent.Kafka;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//loggers
-builder.Services.AddLogging(config =>
+// Register the ApacheKafkaConsumerService as a singleton hosted service
+builder.Services.AddSingleton<IProducer<string, string>>(sp =>
 {
-    config.ClearProviders(); // Clear default providers
-    config.AddConsole();
-    config.AddDebug();
-});// Add console logger
-
-//session
-builder.Services.AddSession(options =>
+    var producerConfig = new ProducerConfig{
+        BootstrapServers = builder.Configuration["Kafka:BootstrapServers"]
+    };
+    return new ProducerBuilder<string, string>(producerConfig).Build();
+});
+ 
+// Register the ApacheKafka CONSUMER Service as a singleton hosted service
+builder.Services.AddSingleton<IConsumer<string, string>>(sp =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Adjust timeout as needed
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
+    var consumer = new ConsumerBuilder<String, String>(new ConsumerConfig{
+        BootstrapServers = builder.Configuration["Kafka:BootstrapServers"],
+        GroupId = builder.Configuration["Kafka:ConsumerGroupId"]
+    }).Build();
+    consumer.Subscribe(builder.Configuration["Kafka:Topic"]);
+    return consumer;
 });
 
 builder.Services.AddHttpContextAccessor();
@@ -46,20 +50,23 @@ builder.Services.AddScoped<IUserNotesRepo, UserNotesRepoImpl>();
 builder.Services.AddScoped<INotesLabelRepo, NotesLabelRepoImpl>();
 builder.Services.AddScoped<INotesLabelService, NotesLabelServiceImpl>();
 
-
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
+// Configure Swagger/OpenAPI and Swagger generation options
 builder.Services.AddSwaggerGen(c =>
 {
+    // Define Swagger document Meta Data (version and Title)
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "FundooNotes", Version = "v1" });
     //For Authorization
     var securitySchema = new OpenApiSecurityScheme
     {
         Description = "Using the Authorization header with the Bearer scheme.",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
+        Name = "Authorization",         // JWT Token Header Name
+        In = ParameterLocation.Header,  // Location of the JWT token in the request headers
+        Type = SecuritySchemeType.Http, // Http type of Security Scheme
         Scheme = "bearer",
         Reference = new OpenApiReference
         {
@@ -68,6 +75,8 @@ builder.Services.AddSwaggerGen(c =>
         }
     };
     c.AddSecurityDefinition("Bearer", securitySchema);
+
+    // Specify security requirements for Swagger endpoints
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     { securitySchema, new[] { "Bearer" } }
@@ -80,13 +89,12 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.InstanceName = "FundooNotesCache"; // Instance name for cache keys
 });
 
-
 builder.Services.AddDistributedMemoryCache();
-
 //jwt
 // Add JWT authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]));
+
 builder.Services.AddAuthentication(au =>
 {
     au.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -104,9 +112,27 @@ builder.Services.AddAuthentication(au =>
         //Validate the expiration and not before values in the token
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero,
+        // Specify whether the server should validate the issuerSigningkey
         ValidateIssuerSigningKey = true,
+        // Set the issuerSigningkey to verify the JWT signature
         IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
+});
+
+//loggers
+builder.Services.AddLogging(config =>
+{
+    config.ClearProviders(); // Clear default providers
+    config.AddConsole();
+    config.AddDebug();
+});// Add console logger
+
+//session
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Adjust timeout as needed
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
 
 //Ending...
@@ -125,14 +151,15 @@ if (app.Environment.IsDevelopment())
         .WithHeaders(HeaderNames.ContentType);
     });
 }
-
+// Configure the HTTP request pipeline
 app.UseHttpsRedirection();
+
 app.UseSession();
-
-app.UseAuthentication(); // Add authentication middleware
-
+// Enable authentication middleware
+app.UseAuthentication();
+// Enable authorization middleware
 app.UseAuthorization();
-
+// Map controller routes
 app.MapControllers();
-
+// Execute the request pipeline
 app.Run();

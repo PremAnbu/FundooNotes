@@ -14,8 +14,8 @@ namespace RepositaryLayer.Repositary.RepoImpl
         private readonly ILogger<UserRepoImpl> _logger;
         public UserRepoImpl(DapperContext context, ILogger<UserRepoImpl> logger)
         {
-           this. context = context;
-           _logger = logger;
+            this.context = context;
+            _logger = logger;
         }
 
         public async Task<int> createUser(UserEntity entity)

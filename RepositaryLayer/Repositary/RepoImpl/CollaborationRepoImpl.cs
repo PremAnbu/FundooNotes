@@ -24,7 +24,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
         {
             _context = context;
             _logger = logger;
-        }   
+        }
 
         public async Task<bool> AddCollaborator(int NoteId, CollaborationRequest Request)
         {
@@ -32,22 +32,33 @@ namespace RepositaryLayer.Repositary.RepoImpl
             {
                 int? user = await GetUserIdByEmailAsync(Request.Email);
                 var query = @"INSERT INTO Collaboration (UserId, UserNotesId, CollaboratorEmail) 
-                            VALUES (@UserId, @UserNotesId, @CollaboratorEmail)";
+                    VALUES (@UserId, @UserNotesId, @CollaboratorEmail)";
+                var checkQuery = @"SELECT COUNT(*) FROM Collaboration WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
                 Collaboration coll = new Collaboration { UserNotesId = NoteId, UserId = user.Value, CollaboratorEmail = Request.Email };
 
                 using (var connection = _context.CreateConnection())
                 {
-                    await connection.ExecuteAsync(query, coll);
+                    int existingCollaborations = await connection.ExecuteScalarAsync<int>(checkQuery, new { UserId = user.Value, UserNotesId = NoteId });
+                    if (existingCollaborations == 0)
+                    {
+                        await connection.ExecuteAsync(query, coll);
+                        _logger.LogInformation("Collaborator added successfully.");
+                        return true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Collaboration already exists for the specified UserId and UserNotesId.");
+                        return false;
+                    }
                 }
-                _logger.LogInformation("Collaborator added successfully.");
-                return true;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while adding collaborator.");
-                throw; 
+                throw;
             }
         }
+
         private async Task<int?> GetUserIdByEmailAsync(string email)
         {
             var selectQuery = $"SELECT UserId FROM Register WHERE UserEmail = @Email";

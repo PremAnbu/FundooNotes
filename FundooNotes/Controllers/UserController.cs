@@ -1,5 +1,9 @@
-﻿using BuisinessLayer.Filter.ExceptionFilter;
+﻿using BuisinessLayer.CustomException;
+using BuisinessLayer.Filter.ExceptionFilter;
 using BuisinessLayer.service.Iservice;
+using BusinessLayer.CustomException;
+using CommonLayer.Models;
+using Confluent.Kafka;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -14,7 +18,7 @@ using System.Text;
 
 namespace FundooNotes.Controllers
 {
-    [Authorize] // Add this attribute to UserController to enforce token-based authentication for all endpoints
+  //  [Authorize] // Add this attribute to UserController to enforce token-based authentication for all endpoints
     [Route("api/[controller]/")]
     [ApiController]
     public class UserController : ControllerBase
@@ -22,41 +26,163 @@ namespace FundooNotes.Controllers
         private readonly IUserService service ;
         private readonly IConfiguration _configuration;
         private readonly IDistributedCache _cache;
+        private readonly IProducer<string, string> _kafkaProducer;
+        private readonly IConsumer<string, string> _kafkaConsumer;
+        //private CancellationTokenSource _cancellationTokenSource;
 
-        public UserController(IUserService service, IConfiguration configuration, IDistributedCache cache)
+        public UserController(IUserService service, IConfiguration configuration, IDistributedCache cache , IProducer<string,string> kafkaProducer, IConsumer<string,string> kafkaConsumer)
         {
             this.service = service;
             _configuration = configuration;
-                _cache = cache;
+            _cache = cache;
+            _kafkaProducer = kafkaProducer;
+            _kafkaConsumer = kafkaConsumer;
 
+            // Start Kafka consumer background task
+            Task.Run(() => ConsumeKafkaMessages(new CancellationTokenSource().Token));
         }
 
-        [AllowAnonymous] // Allow this endpoint to be accessed without authentication
+       // [AllowAnonymous] // Allow this endpoint to be accessed without authentication
         [HttpPost]
         [UserExceptionHandlerFilter]
         public async Task<IActionResult> createUser(UserRequest request)
         {
-            var result=await service.createUser(request);
-            if(result==1)
-                return Ok("User added successfully.");
-            else
-                return BadRequest("Failed to add User.");
+                try
+                {
+                   var result = await service.createUser(request);
+                   if (result == 1)
+                   {
+                    try
+                    {
+                        // Produce Kafka message
+                        var message = $"{result} : User created";
+                        var kafkaMessage = new Message<string, string>
+                        {
+                            Key = "user_created",
+                            Value = message
+                        };
+                        await _kafkaProducer.ProduceAsync(_configuration["Kafka:Topic"], kafkaMessage);
+
+                        //return Ok(message);
+                    }
+                    catch (Exception ex)
+                    {
+                        return StatusCode(StatusCodes.Status500InternalServerError, $"Error: {ex.Message}");
+                    }
+                    var response = new ResponceStructure<UserResponce>
+                        {
+                            Success = true,
+                            Message = "User Registration Successful"
+                        };
+                        return Ok(response);
+                    }
+                    else
+                        return BadRequest("invalid input");
+                }
+                catch (Exception ex)
+                {
+                    if (ex is InvalidUserInputException)
+                    {
+                       var response = new ResponceStructure<UserResponce>
+                       {
+                        Success = false,
+                        Message = ex.Message
+                       };
+                       return BadRequest(response);
+                    }
+                    else 
+                    {
+                       var response = new ResponceStructure<UserResponce>
+                       {
+                        Success = false,
+                        Message = ex.Message
+                       };
+                        return BadRequest(response);
+                    }
+                }
         }
 
-        [AllowAnonymous] // Allow this endpoint to be accessed without authentication
+        private async Task ConsumeKafkaMessages(CancellationToken cancellationToken)
+        {
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    var consumeResult = _kafkaConsumer.Consume(cancellationToken);
+                    var message = consumeResult.Message.Value;
+                    Console.WriteLine($"Received Kafka message: {message}");
+                }
+            }
+            catch (OperationCanceledException ex)
+            {
+                await Console.Out.WriteLineAsync(ex.StackTrace);
+            }
+            finally
+            {
+                _kafkaConsumer.Close();
+            }
+        }
+
+        //[ApiExplorerSettings(IgnoreApi = true)]
+        //public void Dispose()
+        //{
+        //    Dispose(true);
+        //    GC.SuppressFinalize(this);
+        //}
+
+        //protected virtual void Dispose(bool disposing)
+        //{
+        //    if (disposing)
+        //    {
+        //        _kafkaProducer?.Dispose();
+        //        _kafkaConsumer?.Dispose();
+        //        _cancellationTokenSource?.Dispose();
+        //    }
+        //}
+
+        //  [AllowAnonymous] // Allow this endpoint to be accessed without authentication
         [HttpGet("Login/{Email}/{password}")]
         [UserExceptionHandlerFilter]
         public async Task<IActionResult> Login(String Email, String password)
         {
-            UserResponce Responce = await service.Login(Email, password);
-            if (Responce != null)
-            {
-                var token = GenerateToken(Email);
-                return Ok(token);
-            }
-            return Unauthorized();
-
+            string token=null;
+                try
+                {
+                UserResponce Responce = await service.Login(Email, password);
+                if (Responce != null)
+                {
+                     token = GenerateToken(Email);
+                }
+                var response = new ResponceStructure<string>
+                    {
+                        Message = "Login Sucessfull",
+                        Data = token
+                    };
+                    return Ok(response);
+                }
+                catch (Exception ex)
+                {
+                    if (ex is UserNotFoundException)
+                    {
+                        var response = new ResponceStructure<string>
+                        {
+                            Success = false,
+                            Message = ex.Message
+                        };
+                        return Conflict(response);
+                    }
+                    else 
+                    {
+                       var response = new ResponceStructure<string>
+                       {
+                        Success = false,
+                        Message = ex.Message
+                       };
+                        return BadRequest(response);
+                    }
+                }
         }
+
         private string GenerateToken(string email)
         {
             Console.WriteLine(_configuration["jwt:Key"]);
