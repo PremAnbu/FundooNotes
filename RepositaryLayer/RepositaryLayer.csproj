@@ -14,10 +14,13 @@
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0-preview.2.24128.5" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
+    <PackageReference Include="NLog" Version="5.2.8" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
+    <PackageReference Include="NLog.Web.AspNetCore" Version="5.3.8" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CommonLayer\CommonLayer.csproj" />
+    <ProjectReference Include="..\CommonLayer\ModelLayer.csproj" />
   </ItemGroup>
 
 </Project>

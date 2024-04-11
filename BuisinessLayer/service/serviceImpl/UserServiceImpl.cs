@@ -31,7 +31,6 @@ namespace BuisinessLayer.service.serviceImpl
                                    UserLastName=request.LastName,
                                    UserEmail=request.Email,
                                    UserPassword=Encrypt(request.Password)
-            
             };
         }
         private String Encrypt(String password)

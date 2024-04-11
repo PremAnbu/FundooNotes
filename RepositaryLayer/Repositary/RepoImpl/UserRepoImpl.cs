@@ -22,23 +22,27 @@ namespace RepositaryLayer.Repositary.RepoImpl
         {
             try
             {
-                String query = "insert into Register values (@UserFirstName,@UserLastName,@UserEmail,@UserPassword)";
+                var parameters = new DynamicParameters();
+                parameters.Add("@UserFirstName", entity.UserFirstName);parameters.Add("@UserLastName", entity.UserLastName);
+                parameters.Add("@UserEmail", entity.UserEmail);parameters.Add("@UserPassword", entity.UserPassword);
                 var connection = context.CreateConnection();
-                return await connection.ExecuteAsync(query, entity);
+                return await connection.ExecuteAsync("spCreateUser", parameters, commandType: CommandType.StoredProcedure);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while creating user.");
+                _logger.LogError(ex, $"Error occurred while creating user: {ex.Message}");
                 throw;
             }
         }
+
         public async Task<UserEntity> GetUserByEmail(string email)
         {
             try
             {
-                String Query = "Select * from Register where UserEmail = @Email";
+                var parameters = new DynamicParameters();
+                parameters.Add("@Email", email);
                 IDbConnection connection = context.CreateConnection();
-                return await connection.QueryFirstAsync<UserEntity>(Query, new { Email = email });
+                return await connection.QueryFirstAsync<UserEntity>("spGetUserByEmail", parameters, commandType: CommandType.StoredProcedure);
             }
             catch (Exception ex)
             {
@@ -46,13 +50,16 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 throw;
             }
         }
+
         public async Task<int> UpdatePassword(string mailid, string password)
         {
             try
             {
-                String Query = "update Register set UserPassword = @Password where UserEmail = @mail";
+                var parameters = new DynamicParameters();
+                parameters.Add("@UserEmail", mailid);
+                parameters.Add("@UserPassword", password);
                 IDbConnection connection = context.CreateConnection();
-                return await connection.ExecuteAsync(Query, new { mail = mailid, Password = password });
+                return await connection.ExecuteAsync("spUpdatePassword", parameters, commandType: CommandType.StoredProcedure);
             }
             catch (Exception ex)
             {
@@ -60,5 +67,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 throw;
             }
         }
+
+
     }
 }

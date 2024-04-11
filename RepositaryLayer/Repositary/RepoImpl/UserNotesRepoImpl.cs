@@ -11,6 +11,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Azure.Core;
 using Microsoft.Extensions.Logging;
+using System.Data;
+using BuisinessLayer.Entity;
 
 namespace RepositaryLayer.Repositary.RepoImpl
 {
@@ -29,17 +31,25 @@ namespace RepositaryLayer.Repositary.RepoImpl
             {
                 int? user = await GetUserIdByEmailAsync(request.Email);
                 request.UserId = user.Value;
-                var insertQuery = @"INSERT INTO UserNotes (Title,Description, Colour, IsArchived,IsPinned, IsDeleted, UserId)
-                                    VALUES (@Title, @Description, @Colour, @IsArchived, @IsPinned ,@IsDeleted, @UserId)";
+                Console.WriteLine(user.Value);
+
                 using (var connection = context.CreateConnection())
                 {
-                    bool tableExists = await connection.QueryFirstOrDefaultAsync<bool>(
-                                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'UserNotes';");
-
-                    var note = await connection.ExecuteAsync(insertQuery, request);
-
-                    if (tableExists)
+                    var parameters = new
                     {
+                        request.Title,
+                        request.Description,
+                        request.Colour,
+                        request.IsArchived,
+                        request.IsPinned,
+                        request.IsDeleted,
+                        request.UserId
+                    };
+
+                   int rows= await connection.ExecuteAsync("spCreateUserNotes", parameters, commandType: CommandType.StoredProcedure);
+                    if (rows>0)
+                    {
+                        _logger.LogInformation("User Notes Created Sucessfull");
                         return await GetAllNoteByIdAsync(request.UserId);
                     }
                     else
@@ -57,35 +67,59 @@ namespace RepositaryLayer.Repositary.RepoImpl
         }
         public async Task<bool> DeleteNoteAsync(int noteId)
         {
-            var deleteQuery = "update UserNotes set IsDeleted=1 WHERE UserNotesId = @NoteId";
-            using (var connection = context.CreateConnection())
+            try
             {
-                var rowsAffected = await connection.ExecuteAsync(deleteQuery, new { NoteId = noteId});
-                return rowsAffected > 0;
+                using (var connection = context.CreateConnection())
+                {
+                    var parameters = new { NoteId = noteId };
+                    var rowsAffected = await connection.ExecuteAsync("spDeleteNote", parameters, commandType: CommandType.StoredProcedure);
+                    return rowsAffected > 0;
+                }
             }
-        }
-        public async Task<IEnumerable<UserNotesResponce>> GetAllNoteByIdAsync(int userId)
-        {
-            var selectQuery = "SELECT * FROM UserNotes WHERE UserId = @UserId and IsDeleted=0";
-            using (var connection = context.CreateConnection())
+            catch (Exception ex)
             {
-                var notes = await connection.QueryAsync<UserNotesResponce>(selectQuery, new { UserId = userId });
-                return notes.Reverse().ToList();
+                _logger.LogError(ex, $"Error occurred while deleting note with ID: {noteId}");
+                throw;
             }
         }
 
-        public async Task<IEnumerable<UserNotesResponce>> GetAllNoteAsync(string email)
+        public async Task<IEnumerable<UserNotesResponce>> GetAllNoteByIdAsync(int userId)
         {
-            int? user = await GetUserIdByEmailAsync(email);
-            int userId = user.Value;
-            var selectQuery = "SELECT * FROM UserNotes WHERE UserId = @UserId and IsDeleted=0";
-            using (var connection = context.CreateConnection())
+            try
             {
-                Console.WriteLine("Ms sql Server database");
-                var notes = await connection.QueryAsync<UserNotesResponce>(selectQuery, new { UserId = userId });
-                return notes.Reverse().ToList();
+                using (var connection = context.CreateConnection())
+                {
+                    var parameters = new { UserId = userId };
+                    var notes = await connection.QueryAsync<UserNotesResponce>("spGetAllNotesByUserId", parameters, commandType: CommandType.StoredProcedure);
+                    return notes.Reverse().ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error occurred while fetching notes for user with ID: {userId}");
+                throw;
             }
         }
+
+
+        public async Task<IEnumerable<UserNotesResponce>> GetAllNoteAsync(string email)
+        {
+            try
+            {
+                using (var connection = context.CreateConnection())
+                {
+                    var parameters = new { Email = email };
+                    var notes = await connection.QueryAsync<UserNotesResponce>("spGetAllNotesByEmail", parameters, commandType: CommandType.StoredProcedure);
+                    return notes.Reverse().ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error occurred while fetching notes for user with email: {email}");
+                throw;
+            }
+        }
+
 
         public async Task<UserNotesResponce> UpdateNoteAsync(int noteId, UserNotes updatedNote)
         {
@@ -96,9 +130,6 @@ namespace RepositaryLayer.Repositary.RepoImpl
 
                 var selectQuery = "SELECT UserNotesId, Description, Title, Colour FROM UserNotes WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
 
-                var updateQuery = "UPDATE UserNotes SET Description = @Description, Title = @Title, Colour = @Colour WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
-                _logger.LogInformation("Updating note...");
-
                 using (var connection = context.CreateConnection())
                 {
                     var currentNote = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = userId.Value, UserNotesId = noteId });
@@ -108,9 +139,16 @@ namespace RepositaryLayer.Repositary.RepoImpl
                         throw new FileNotFoundException("Note not found");
                     }
 
-                    await connection.ExecuteAsync(updateQuery, new { Description = updatedNote.Description,
-                        Title = updatedNote.Title, Colour = updatedNote.Colour,
-                        UserId = updatedNote.UserId, UserNotesId = noteId });
+                    var parameters = new
+                    {
+                        UserId = userId.Value,
+                        NoteId = noteId, // Corrected parameter name
+                        Description = updatedNote.Description,
+                        Title = updatedNote.Title,
+                        Colour = updatedNote.Colour
+                    };
+
+                    await connection.ExecuteAsync("spUpdateNote", parameters, commandType: CommandType.StoredProcedure);
 
                     // Retrieve the updated note
                     var updatedNoteResponse = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = updatedNote.UserId, UserNotesId = noteId });
@@ -125,18 +163,24 @@ namespace RepositaryLayer.Repositary.RepoImpl
             }
         }
 
-
-
-        private async Task<int?> GetUserIdByEmailAsync(string email)
+        private async Task<int> GetUserIdByEmailAsync(string email)
         {
-            var selectQuery = $"SELECT UserId FROM Register WHERE UserEmail = @Email";
-
-            using (var connection = context.CreateConnection())
+            try
             {
-                var userId = await connection.QueryFirstOrDefaultAsync<int?>(selectQuery, new { Email = email });
-                return userId;
+                var parameters = new { Email = email };
+                using (var connection = context.CreateConnection())
+                {
+                    var result = await connection.QueryFirstOrDefaultAsync<int>("spGetUserIdByEmail", parameters, commandType: CommandType.StoredProcedure);
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error occurred while fetching UserId for email: {email}");
+                throw;
             }
         }
+
 
     }
 }
