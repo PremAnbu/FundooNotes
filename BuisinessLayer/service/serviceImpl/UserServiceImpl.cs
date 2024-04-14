@@ -31,7 +31,6 @@ namespace BuisinessLayer.service.serviceImpl
                                    UserLastName=request.LastName,
                                    UserEmail=request.Email,
                                    UserPassword=Encrypt(request.Password)
-            
             };
         }
         private String Encrypt(String password)
@@ -44,7 +43,9 @@ namespace BuisinessLayer.service.serviceImpl
         private String Decrypt(String encryptedPass)
         {          
             byte[] passbyte=Convert.FromBase64String(encryptedPass);
-            return Encoding.UTF8.GetString(passbyte);   
+            string s= Encoding.UTF8.GetString(passbyte);  
+            Console.WriteLine(s);
+            return s;
         }
         private UserResponce MapToResponce(UserEntity responce)
         {
@@ -68,6 +69,7 @@ namespace BuisinessLayer.service.serviceImpl
             try
             {
                  entity = UserRepo.GetUserByEmail(Email).Result;
+                Console.WriteLine(entity.UserEmail);
             }
             catch(AggregateException e)
             {

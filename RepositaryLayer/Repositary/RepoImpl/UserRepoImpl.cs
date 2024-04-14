@@ -22,37 +22,52 @@ namespace RepositaryLayer.Repositary.RepoImpl
         {
             try
             {
-                String query = "insert into Register values (@UserFirstName,@UserLastName,@UserEmail,@UserPassword)";
+                var parameters = new DynamicParameters();
+                parameters.Add("@UserFirstName", entity.UserFirstName);parameters.Add("@UserLastName", entity.UserLastName);
+                parameters.Add("@UserEmail", entity.UserEmail);parameters.Add("@UserPassword", entity.UserPassword);
                 var connection = context.CreateConnection();
-                return await connection.ExecuteAsync(query, entity);
+                return await connection.ExecuteAsync("spCreateUser", parameters, commandType: CommandType.StoredProcedure);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while creating user.");
+                _logger.LogError(ex, $"Error occurred while creating user: {ex.Message}");
                 throw;
             }
         }
+
         public async Task<UserEntity> GetUserByEmail(string email)
         {
             try
             {
-                String Query = "Select * from Register where UserEmail = @Email";
-                IDbConnection connection = context.CreateConnection();
-                return await connection.QueryFirstAsync<UserEntity>(Query, new { Email = email });
+                var parameters = new DynamicParameters();
+                parameters.Add("@Email", email);
+
+                using (IDbConnection connection = context.CreateConnection())
+                {
+                    if (connection.State != ConnectionState.Open)
+                        connection.Open();
+
+                    var user = await connection.QueryFirstOrDefaultAsync<UserEntity>("spGetUserByEmail",parameters,commandType: CommandType.StoredProcedure);
+                    Console.WriteLine(user.UserEmail);
+                    return user;
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error occurred while fetching user by email: {email}");
-                throw;
+                throw; // Re-throw the exception to maintain the error propagation
             }
         }
+
         public async Task<int> UpdatePassword(string mailid, string password)
         {
             try
             {
-                String Query = "update Register set UserPassword = @Password where UserEmail = @mail";
+                var parameters = new DynamicParameters();
+                parameters.Add("@UserEmail", mailid);
+                parameters.Add("@UserPassword", password);
                 IDbConnection connection = context.CreateConnection();
-                return await connection.ExecuteAsync(Query, new { mail = mailid, Password = password });
+                return await connection.ExecuteAsync("spUpdatePassword", parameters, commandType: CommandType.StoredProcedure);
             }
             catch (Exception ex)
             {
@@ -60,5 +75,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 throw;
             }
         }
+
+
     }
 }

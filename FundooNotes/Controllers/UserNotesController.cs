@@ -11,7 +11,7 @@ using System.Text.Json;
 
 namespace FundooNotes.Controllers
 {
-  //  [Authorize]
+   // [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserNotesController : ControllerBase
@@ -26,19 +26,20 @@ namespace FundooNotes.Controllers
 
         }
 
-        [HttpPost("User Notes")]
+        [HttpPost]
         public async Task<IActionResult> CreateUserNotes(UserNotesRequest request)
         {
             return Ok(await service.CreateUserNotes(request));
         }
 
-        [HttpPut("{noteId}")]
+        [AllowAnonymous]
+        [HttpPut("{user_id}")]
         public async Task<IActionResult> UpdateNoteAsync(int noteId, [FromBody] UserNotesRequest updatedNote)
         {
             return Ok(await service.UpdateNoteAsync(noteId, updatedNote));
         }
 
-        [HttpDelete("{noteId}")]
+        [HttpDelete("{user_id}")]
         public async Task<IActionResult> DeleteNoteAsync(int noteId)
         {
             var result = await service.DeleteNoteAsync(noteId);
@@ -48,7 +49,7 @@ namespace FundooNotes.Controllers
                 return BadRequest("Failed to remove UserNotes.");
         }
 
-        [HttpGet("{email}")]
+        [HttpGet]
         public async Task<IActionResult> GetAllNotes(string email)
         {
             //Redis data structure create key and value p

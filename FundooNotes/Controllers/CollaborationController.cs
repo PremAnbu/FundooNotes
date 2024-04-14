@@ -12,7 +12,7 @@ using System.Text.Json;
 
 namespace FundooNotes.Controllers
 {
-   // [Authorize]
+  //  [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CollaborationController : ControllerBase
@@ -36,7 +36,7 @@ namespace FundooNotes.Controllers
                 return BadRequest("Failed to add collaboration.");
         }
 
-        [HttpGet("{CollaborationId}")]
+        [HttpGet("{collaboration_id}")]
         public async Task<IActionResult> GetCollaborator(int CollaborationId)
         {
             //Redis data structure create key and value p
@@ -64,7 +64,7 @@ namespace FundooNotes.Controllers
             return NotFound("No collaborations found for the specified collaborations id.");
         }
 
-        [HttpDelete("RemoveCollaborator/{CollaborationId}")]
+        [HttpDelete("{collaboration_id}")]
         public async Task<IActionResult> RemoveCollaborator(int CollaborationId)
         {
             var result = await collaborationBL.RemoveCollaborator(CollaborationId);

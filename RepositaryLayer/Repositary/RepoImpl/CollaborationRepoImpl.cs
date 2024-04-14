@@ -61,7 +61,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
 
         private async Task<int?> GetUserIdByEmailAsync(string email)
         {
-            var selectQuery = $"SELECT UserId FROM Register WHERE UserEmail = @Email";
+            var selectQuery = $"SELECT UserId FROM Users WHERE UserEmail = @Email";
 
             using (var connection = _context.CreateConnection())
             {
@@ -95,7 +95,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 {
                 int rowsAffected = await connection.ExecuteAsync(query);
                 return rowsAffected > 0; 
-        }
+                }
 
         }
     }

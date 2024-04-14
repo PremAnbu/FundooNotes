@@ -10,11 +10,21 @@ using RepositaryLayer.Repositary.RepoImpl;
 using System.Text;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Confluent.Kafka;
+using NLog.Web;
+using NLog;
 
-var builder = WebApplication.CreateBuilder(args);
+//var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+//logger.Debug("init main");
+//try
+//{
 
-// Register the ApacheKafkaConsumerService as a singleton hosted service
-builder.Services.AddSingleton<IProducer<string, string>>(sp =>
+    var builder = WebApplication.CreateBuilder(args);
+    // NLog: Setup NLog for Dependency injection
+    //builder.Logging.ClearProviders();
+    //builder.Host.UseNLog();
+
+    // Register the ApacheKafkaConsumerService as a singleton hosted service
+    builder.Services.AddSingleton<IProducer<string, string>>(sp =>
 {
     var producerConfig = new ProducerConfig{
         BootstrapServers = builder.Configuration["Kafka:BootstrapServers"]
@@ -120,13 +130,18 @@ builder.Services.AddAuthentication(au =>
 });
 
 //loggers
-builder.Services.AddLogging(config =>
-{
-    config.ClearProviders(); // Clear default providers
-    config.AddConsole();
-    config.AddDebug();
-});// Add console logger
+//builder.Services.AddLogging(config =>
+//{
+//    config.ClearProviders(); // Clear default providers
+//    config.AddConsole();
+//    config.AddDebug();
+//});// Add console logger
 
+var logpath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+NLog.GlobalDiagnosticsContext.Set("LogDirectory", logpath);
+builder.Logging.ClearProviders();
+builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+builder.Host.UseNLog();
 //session
 builder.Services.AddSession(options =>
 {
@@ -163,3 +178,13 @@ app.UseAuthorization();
 app.MapControllers();
 // Execute the request pipeline
 app.Run();
+
+//}
+//catch(Exception ex)
+//{
+//    logger.Error(ex);
+//}
+//finally
+//{
+//    LogManager.Shutdown();
+//}
