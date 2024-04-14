@@ -28,7 +28,6 @@ namespace FundooNotes.Controllers
         private readonly IDistributedCache _cache;
         private readonly IProducer<string, string> _kafkaProducer;
         private readonly IConsumer<string, string> _kafkaConsumer;
-        //private CancellationTokenSource _cancellationTokenSource;
         private readonly ILogger<UserController> _logger;
 
 
@@ -132,8 +131,8 @@ namespace FundooNotes.Controllers
         }
 
 
-        [AllowAnonymous] // Allow this endpoint to be accessed without authentication
-        [HttpGet("{email}/{password}")]
+      //  [AllowAnonymous] // Allow this endpoint to be accessed without authentication
+        [HttpGet("{Email}/{password}")]
         [UserExceptionHandlerFilter]
         public async Task<IActionResult> Login(String Email, String password)
         {

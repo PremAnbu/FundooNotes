@@ -41,13 +41,21 @@ namespace RepositaryLayer.Repositary.RepoImpl
             {
                 var parameters = new DynamicParameters();
                 parameters.Add("@Email", email);
-                IDbConnection connection = context.CreateConnection();
-                return await connection.QueryFirstAsync<UserEntity>("spGetUserByEmail", parameters, commandType: CommandType.StoredProcedure);
+
+                using (IDbConnection connection = context.CreateConnection())
+                {
+                    if (connection.State != ConnectionState.Open)
+                        connection.Open();
+
+                    var user = await connection.QueryFirstOrDefaultAsync<UserEntity>("spGetUserByEmail",parameters,commandType: CommandType.StoredProcedure);
+                    Console.WriteLine(user.UserEmail);
+                    return user;
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error occurred while fetching user by email: {email}");
-                throw;
+                throw; // Re-throw the exception to maintain the error propagation
             }
         }
 
