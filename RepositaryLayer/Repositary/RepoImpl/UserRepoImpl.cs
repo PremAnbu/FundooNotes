@@ -41,13 +41,13 @@ namespace RepositaryLayer.Repositary.RepoImpl
             {
                 var parameters = new DynamicParameters();
                 parameters.Add("@Email", email);
-
+                Console.WriteLine(email);
                 using (IDbConnection connection = context.CreateConnection())
                 {
                     if (connection.State != ConnectionState.Open)
                         connection.Open();
 
-                    var user = await connection.QueryFirstOrDefaultAsync<UserEntity>("spGetUserByEmail",parameters,commandType: CommandType.StoredProcedure);
+                    var user = await connection.QueryFirstOrDefaultAsync<UserEntity>("spGetUserByEmail", parameters,commandType: CommandType.StoredProcedure);
                     Console.WriteLine(user.UserEmail);
                     return user;
                 }

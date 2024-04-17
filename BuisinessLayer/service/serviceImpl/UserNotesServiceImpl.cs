@@ -20,7 +20,7 @@ namespace BuisinessLayer.service.serviceImpl
             this.userNotesRepo = userNotesRepo;
         }
 
-        private UserNotes MapToUserNotesEntity(UserNotesRequest request)
+        private UserNotes MapToUserNotesEntity(UserNotesRequest request,int userId)
         {
             return new UserNotes
             {
@@ -30,27 +30,27 @@ namespace BuisinessLayer.service.serviceImpl
                 IsArchived = false,
                 IsPinned = false,
                 IsDeleted = false,
-                Email = request.Email,
+                UserId = userId
+               // Email = request.Email,
             };
         }
-        public Task<IEnumerable<UserNotesResponce>> CreateUserNotes(UserNotesRequest request)
+        public Task<IEnumerable<UserNotesResponce>> CreateUserNotes(UserNotesRequest request, int userId)
         {
-            Console.WriteLine("service impl");
-            return userNotesRepo.CreateUserNotes(MapToUserNotesEntity(request));
+            return userNotesRepo.CreateUserNotes(MapToUserNotesEntity(request,userId));
         }
 
-        public Task<UserNotesResponce> UpdateNoteAsync(int noteId, UserNotesRequest updatedNote)
+        public Task<UserNotesResponce> UpdateNote(int noteId, UserNotesRequest updatedNote, int userId)
         {
-            return userNotesRepo.UpdateNoteAsync(noteId, (MapToUserNotesEntity(updatedNote)));
+            return userNotesRepo.UpdateNote(noteId, (MapToUserNotesEntity(updatedNote, userId)));
         }
-        public Task<bool> DeleteNoteAsync(int noteId)
+        public Task<bool> DeleteNote(int noteId)
         {
-            return userNotesRepo.DeleteNoteAsync(noteId);
+            return userNotesRepo.DeleteNote(noteId);
         }
 
-        public Task<IEnumerable<UserNotesResponce>> GetAllNoteAsync(string email)
+        public Task<IEnumerable<UserNotesResponce>> GetAllNotes(int userId)
         {
-            return userNotesRepo.GetAllNoteAsync(email);
+            return userNotesRepo.GetAllNotes(userId);
         }
     }
 }
