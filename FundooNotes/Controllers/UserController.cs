@@ -142,7 +142,7 @@ namespace FundooNotes.Controllers
                 UserResponce Responce = await service.Login(Email, password);
                 if (Responce != null)
                 {
-                     token = GenerateToken(Email);
+                     token = GenerateToken(Responce);
                 }
                 var response = new ResponceStructure<string>
                     {
@@ -179,7 +179,7 @@ namespace FundooNotes.Controllers
                 }
         }
 
-        private string GenerateToken(string email)
+        private string GenerateToken(UserResponce user)
         {
             Console.WriteLine(_configuration["jwt:Key"]);
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
@@ -187,7 +187,9 @@ namespace FundooNotes.Controllers
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name,user.FirstName)
             };
 
             var token = new JwtSecurityToken(

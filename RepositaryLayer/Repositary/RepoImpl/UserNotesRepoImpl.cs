@@ -29,10 +29,6 @@ namespace RepositaryLayer.Repositary.RepoImpl
         {
             try
             {
-                int? user = await GetUserIdByEmailAsync(request.Email);
-                request.UserId = user.Value;
-                Console.WriteLine(user.Value);
-
                 using (var connection = context.CreateConnection())
                 {
                     var parameters = new
@@ -50,11 +46,10 @@ namespace RepositaryLayer.Repositary.RepoImpl
                     if (rows>0)
                     {
                         _logger.LogInformation("User Notes Created Sucessfull");
-                        return await GetAllNoteByIdAsync(request.UserId);
+                        return await GetAllNoteById(request.UserId);
                     }
                     else
                     {
-                        // Return an empty list or handle the case when the table doesn't exist
                         return new List<UserNotesResponce>();
                     }
                 }
@@ -65,7 +60,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 throw; 
             }
         }
-        public async Task<bool> DeleteNoteAsync(int noteId)
+        public async Task<bool> DeleteNote(int noteId)
         {
             try
             {
@@ -83,7 +78,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
             }
         }
 
-        public async Task<IEnumerable<UserNotesResponce>> GetAllNoteByIdAsync(int userId)
+        public async Task<IEnumerable<UserNotesResponce>> GetAllNoteById(int userId)
         {
             try
             {
@@ -102,37 +97,34 @@ namespace RepositaryLayer.Repositary.RepoImpl
         }
 
 
-        public async Task<IEnumerable<UserNotesResponce>> GetAllNoteAsync(string email)
+        public async Task<IEnumerable<UserNotesResponce>> GetAllNotes(int userId)
         {
             try
             {
                 using (var connection = context.CreateConnection())
                 {
-                    var parameters = new { Email = email };
-                    var notes = await connection.QueryAsync<UserNotesResponce>("spGetAllNotesByEmail", parameters, commandType: CommandType.StoredProcedure);
+                    var parameters = new { UserId = userId };
+                    var notes = await connection.QueryAsync<UserNotesResponce>("spGetAllNotesByUserId", parameters, commandType: CommandType.StoredProcedure);
                     return notes.Reverse().ToList();
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error occurred while fetching notes for user with email: {email}");
+                _logger.LogError(ex, $"Error occurred while fetching notes for user with email");
                 throw;
             }
         }
 
 
-        public async Task<UserNotesResponce> UpdateNoteAsync(int noteId, UserNotes updatedNote)
+        public async Task<UserNotesResponce> UpdateNote(int noteId, UserNotes updatedNote)
         {
             try
             {
-                int? userId = await GetUserIdByEmailAsync(updatedNote.Email);
-                updatedNote.UserId = userId.Value;
-
                 var selectQuery = "SELECT UserNotesId, Description, Title, Colour FROM UserNotes WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
 
                 using (var connection = context.CreateConnection())
                 {
-                    var currentNote = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = userId.Value, UserNotesId = noteId });
+                    var currentNote = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = updatedNote.UserId, UserNotesId = noteId });
                     if (currentNote == null)
                     {
                         _logger.LogError("Note not found");
@@ -141,7 +133,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
 
                     var parameters = new
                     {
-                        UserId = userId.Value,
+                        UserId = updatedNote.UserId,
                         NoteId = noteId, // Corrected parameter name
                         Description = updatedNote.Description,
                         Title = updatedNote.Title,
@@ -163,24 +155,22 @@ namespace RepositaryLayer.Repositary.RepoImpl
             }
         }
 
-        private async Task<int> GetUserIdByEmailAsync(string email)
-        {
-            try
-            {
-                var parameters = new { Email = email };
-                using (var connection = context.CreateConnection())
-                {
-                    var result = await connection.QueryFirstOrDefaultAsync<int>("spGetUserIdByEmail", parameters, commandType: CommandType.StoredProcedure);
-                    return result;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error occurred while fetching UserId for email: {email}");
-                throw;
-            }
-        }
-
-
+        //private async Task<int> GetUserIdByEmailAsync(string email)
+        //{
+        //    try
+        //    {
+        //        var parameters = new { Email = email };
+        //        using (var connection = context.CreateConnection())
+        //        {
+        //            var result = await connection.QueryFirstOrDefaultAsync<int>("spGetUserIdByEmail", parameters, commandType: CommandType.StoredProcedure);
+        //            return result;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, $"Error occurred while fetching UserId for email: {email}");
+        //        throw;
+        //    }
+        //}
     }
 }

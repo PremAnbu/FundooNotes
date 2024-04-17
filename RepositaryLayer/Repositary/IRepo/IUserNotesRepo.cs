@@ -11,8 +11,8 @@ namespace RepositaryLayer.Repositary.IRepo
     public interface IUserNotesRepo
     {
         public Task<IEnumerable<UserNotesResponce>> CreateUserNotes(UserNotes request);
-        public Task<UserNotesResponce> UpdateNoteAsync(int noteId, UserNotes updatedNote);
-        public Task<bool> DeleteNoteAsync(int noteId);
-        public Task<IEnumerable<UserNotesResponce>> GetAllNoteAsync(string email);
+        public Task<UserNotesResponce> UpdateNote(int noteId, UserNotes updatedNote);
+        public Task<bool> DeleteNote(int noteId);
+        public Task<IEnumerable<UserNotesResponce>> GetAllNotes(int userId);
     }
 }

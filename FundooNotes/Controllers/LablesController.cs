@@ -29,7 +29,7 @@ namespace FundooNotes.Controllers
                 return BadRequest("Failed to add Label.");
         }
 
-        [HttpPut("{Label_name}")]
+        [HttpPut]
         public async Task<IActionResult> UpdateLabelName(string labelName,string newLabelName)
         {
             var result=await service.UpdateLabelName(labelName,newLabelName);
@@ -39,7 +39,7 @@ namespace FundooNotes.Controllers
                 return BadRequest("Failed to Update  Label Name");
         }
 
-        [HttpDelete("{Label_name}")]
+        [HttpDelete]
         public async Task<IActionResult> DeleteLabel(string labelName)
         {
             var result = await service.DeleteLabel(labelName);

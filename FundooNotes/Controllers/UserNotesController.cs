@@ -29,20 +29,22 @@ namespace FundooNotes.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateUserNotes(UserNotesRequest request)
         {
-            return Ok(await service.CreateUserNotes(request));
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            return Ok(await service.CreateUserNotes(request,userId));
         }
 
         [AllowAnonymous]
-        [HttpPut("{user_id}")]
+        [HttpPut]
         public async Task<IActionResult> UpdateNoteAsync(int noteId, [FromBody] UserNotesRequest updatedNote)
         {
-            return Ok(await service.UpdateNoteAsync(noteId, updatedNote));
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            return Ok(await service.UpdateNote(noteId, updatedNote,userId));
         }
 
-        [HttpDelete("{user_id}")]
+        [HttpDelete]
         public async Task<IActionResult> DeleteNoteAsync(int noteId)
         {
-            var result = await service.DeleteNoteAsync(noteId);
+            var result = await service.DeleteNote(noteId);
             if (result)
                 return Ok("UserNotes removed successfully.");
             else
@@ -50,10 +52,11 @@ namespace FundooNotes.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllNotes(string email)
+        public async Task<IActionResult> GetAllNotes()
         {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
             //Redis data structure create key and value p
-            var cacheKey = $"Labels_{email}";
+            var cacheKey = $"Labels_{userId}";
             var cachedLabels = await _cache.GetStringAsync(cacheKey);
 
             // Return cached data if available
@@ -63,7 +66,7 @@ namespace FundooNotes.Controllers
                 return Ok(JsonSerializer.Deserialize<List<UserNotesResponce>>(cachedLabels));
             }
             // Cache data if not already cached
-            var userNotes = await service.GetAllNoteAsync(email);
+            var userNotes = await service.GetAllNotes(userId);
             if (userNotes != null)
             {
                 var cacheOptions = new DistributedCacheEntryOptions

@@ -10,9 +10,9 @@ namespace BuisinessLayer.service.Iservice
 {
     public interface IUserNotesService
     {
-        public Task<IEnumerable<UserNotesResponce>> CreateUserNotes(UserNotesRequest request);
-        public Task<UserNotesResponce> UpdateNoteAsync(int noteId, UserNotesRequest updatedNote);
-        public Task<bool> DeleteNoteAsync(int noteId);
-        public Task<IEnumerable<UserNotesResponce>> GetAllNoteAsync(string email);
+        public Task<IEnumerable<UserNotesResponce>> CreateUserNotes(UserNotesRequest request,int userId);
+        public Task<UserNotesResponce> UpdateNote(int noteId, UserNotesRequest updatedNote,int userId);
+        public Task<bool> DeleteNote(int noteId);
+        public Task<IEnumerable<UserNotesResponce>> GetAllNotes(int userId);
     }
 }

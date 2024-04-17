@@ -13,10 +13,6 @@ using Confluent.Kafka;
 using NLog.Web;
 using NLog;
 
-//var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
-//logger.Debug("init main");
-//try
-//{
 
     var builder = WebApplication.CreateBuilder(args);
     // NLog: Setup NLog for Dependency injection
@@ -178,13 +174,3 @@ app.UseAuthorization();
 app.MapControllers();
 // Execute the request pipeline
 app.Run();
-
-//}
-//catch(Exception ex)
-//{
-//    logger.Error(ex);
-//}
-//finally
-//{
-//    LogManager.Shutdown();
-//}
