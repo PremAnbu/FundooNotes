@@ -18,18 +18,18 @@ namespace BuisinessLayer.service.serviceImpl
         {
             this.collaborationRL = collaborationRL;
         }
-        public Task<bool> AddCollaborator(int NoteId, CollaborationRequest Request)
+        public bool AddCollaborator(int NoteId, CollaborationRequest Request,int userId)
         {
-            return collaborationRL.AddCollaborator(NoteId, Request);
+            return collaborationRL.AddCollaborator(NoteId, Request,userId);
         }
-        public Task<IEnumerable<Collaboration>> GetCollaborators(int CollaborationId)
+        public Collaboration GetCollaborators(int CollaborationId, int userId)
         {
-            return collaborationRL.GetCollaborators(CollaborationId);
+            return collaborationRL.GetCollaborators(CollaborationId,userId);
         }
 
-        public Task<bool> RemoveCollaborator(int CollaborationId)
+        public bool RemoveCollaborator(int CollaborationId, int userId)
         {
-            return collaborationRL.RemoveCollaborator(CollaborationId);
+            return collaborationRL.RemoveCollaborator(CollaborationId,userId);
         }
     }
 }

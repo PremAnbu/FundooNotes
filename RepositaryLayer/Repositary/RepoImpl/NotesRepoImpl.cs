@@ -13,19 +13,20 @@ using Azure.Core;
 using Microsoft.Extensions.Logging;
 using System.Data;
 using BuisinessLayer.Entity;
+using RepositaryLayer.GlobalCustomException;
 
 namespace RepositaryLayer.Repositary.RepoImpl
 {
-    public class UserNotesRepoImpl : IUserNotesRepo
+    public class NotesRepoImpl : INotesRepo
     {
         private readonly DapperContext context;
-        private readonly ILogger<UserNotesRepoImpl> _logger;
-        public UserNotesRepoImpl(DapperContext context, ILogger<UserNotesRepoImpl> logger)
+        private readonly ILogger<NotesRepoImpl> _logger;
+        public NotesRepoImpl(DapperContext context, ILogger<NotesRepoImpl> logger)
         {
             this.context = context;
             _logger = logger;
         }
-        public async Task<IEnumerable<UserNotesResponce>> CreateUserNotes(UserNotes request)
+        public List<NotesResponce> CreateUserNotes(Notes request)
         {
             try
             {
@@ -42,50 +43,50 @@ namespace RepositaryLayer.Repositary.RepoImpl
                         request.UserId
                     };
 
-                   int rows= await connection.ExecuteAsync("spCreateUserNotes", parameters, commandType: CommandType.StoredProcedure);
+                   int rows=  connection.Execute("spCreateUserNotes", parameters, commandType: CommandType.StoredProcedure);
                     if (rows>0)
                     {
                         _logger.LogInformation("User Notes Created Sucessfull");
-                        return await GetAllNoteById(request.UserId);
+                        return  GetAllNoteById(request.UserId);
                     }
                     else
                     {
-                        return new List<UserNotesResponce>();
+                        return new List<NotesResponce>();
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while creating user notes.");
-                throw; 
+                throw new UserNotesNotPresentException("Error Occurred while creating user notes"); 
             }
         }
-        public async Task<bool> DeleteNote(int noteId)
+        public bool DeleteNote(int noteId,int userId)
         {
             try
             {
                 using (var connection = context.CreateConnection())
                 {
-                    var parameters = new { NoteId = noteId };
-                    var rowsAffected = await connection.ExecuteAsync("spDeleteNote", parameters, commandType: CommandType.StoredProcedure);
+                    var parameters = new { NoteId = noteId,UserId=userId };
+                    var rowsAffected =  connection.Execute("spDeleteNote", parameters, commandType: CommandType.StoredProcedure);
                     return rowsAffected > 0;
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error occurred while deleting note with ID: {noteId}");
-                throw;
+                throw new UserNotesNotPresentException("Error Occurred while finding notes");
             }
         }
 
-        public async Task<IEnumerable<UserNotesResponce>> GetAllNoteById(int userId)
+        public List<NotesResponce> GetAllNoteById(int userId)
         {
             try
             {
                 using (var connection = context.CreateConnection())
                 {
                     var parameters = new { UserId = userId };
-                    var notes = await connection.QueryAsync<UserNotesResponce>("spGetAllNotesByUserId", parameters, commandType: CommandType.StoredProcedure);
+                    var notes =  connection.Query<NotesResponce>("spGetAllNotesByUserId", parameters, commandType: CommandType.StoredProcedure);
                     return notes.Reverse().ToList();
                 }
             }
@@ -96,15 +97,33 @@ namespace RepositaryLayer.Repositary.RepoImpl
             }
         }
 
+        public List<NotesResponce> GetNoteById(int noteId, int userId)
+        {
+            try
+            {
+                using (var connection = context.CreateConnection())
+                {
+                    var parameters = new { UserNotesId = noteId,UserId=userId };
+                    var notes =  connection.Query<NotesResponce>("spGetNoteByNoteId", parameters, commandType: CommandType.StoredProcedure);
+                    return notes.Reverse().ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error occurred while fetching notes for user with ID: {noteId}");
+                throw;
+            }
+        }
 
-        public async Task<IEnumerable<UserNotesResponce>> GetAllNotes(int userId)
+
+        public List<NotesResponce> GetAllNotes(int userId)
         {
             try
             {
                 using (var connection = context.CreateConnection())
                 {
                     var parameters = new { UserId = userId };
-                    var notes = await connection.QueryAsync<UserNotesResponce>("spGetAllNotesByUserId", parameters, commandType: CommandType.StoredProcedure);
+                    var notes =  connection.Query<NotesResponce>("spGetAllNotesByUserId", parameters, commandType: CommandType.StoredProcedure);
                     return notes.Reverse().ToList();
                 }
             }
@@ -116,7 +135,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
         }
 
 
-        public async Task<UserNotesResponce> UpdateNote(int noteId, UserNotes updatedNote)
+        public NotesResponce UpdateNote(int noteId, Notes updatedNote)
         {
             try
             {
@@ -124,7 +143,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
 
                 using (var connection = context.CreateConnection())
                 {
-                    var currentNote = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = updatedNote.UserId, UserNotesId = noteId });
+                    var currentNote =  connection.QueryFirstOrDefault<NotesResponce>(selectQuery, new { UserId = updatedNote.UserId, UserNotesId = noteId });
                     if (currentNote == null)
                     {
                         _logger.LogError("Note not found");
@@ -140,10 +159,10 @@ namespace RepositaryLayer.Repositary.RepoImpl
                         Colour = updatedNote.Colour
                     };
 
-                    await connection.ExecuteAsync("spUpdateNote", parameters, commandType: CommandType.StoredProcedure);
+                     connection.Execute("spUpdateNote", parameters, commandType: CommandType.StoredProcedure);
 
                     // Retrieve the updated note
-                    var updatedNoteResponse = await connection.QueryFirstOrDefaultAsync<UserNotesResponce>(selectQuery, new { UserId = updatedNote.UserId, UserNotesId = noteId });
+                    var updatedNoteResponse =  connection.QueryFirstOrDefault<NotesResponce>(selectQuery, new { UserId = updatedNote.UserId, UserNotesId = noteId });
                     _logger.LogInformation("Note updated successfully.");
                     return updatedNoteResponse;
                 }

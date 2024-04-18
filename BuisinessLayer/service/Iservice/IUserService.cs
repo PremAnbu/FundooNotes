@@ -11,9 +11,9 @@ namespace BuisinessLayer.service.Iservice
 {
     public interface IUserService
     {
-        public Task<int> createUser(UserRequest request);
-        public Task<UserResponce> Login(String Email, String password);
-        public Task<String> ChangePasswordRequest(String Email);
-        Task<string> ChangePassword(string otp,String password);
+        public int createUser(UserRequest request);
+        public UserResponce Login(String Email, String password);
+        public String ChangePasswordRequest(String Email);
+        public string ChangePassword(string otp,String password);
     }
 }

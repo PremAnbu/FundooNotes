@@ -10,8 +10,8 @@ namespace RepositaryLayer.Repositary.IRepo
 {
     public interface ICollaborationRepo
     {
-        public Task<bool> AddCollaborator(int NoteId, CollaborationRequest Request);
-        public Task<IEnumerable<Collaboration>> GetCollaborators(int CollaborationId);
-        public Task<bool> RemoveCollaborator(int CollaborationId);
+        public bool AddCollaborator(int NoteId, CollaborationRequest Request,int userId);
+        public Collaboration GetCollaborators(int CollaborationId, int userId);
+        public bool RemoveCollaborator(int CollaborationId,int userId);
     }
 }

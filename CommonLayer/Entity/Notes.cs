@@ -7,10 +7,11 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace RepositaryLayer.Entity
 {
-    public class UserNotes
+    public class Notes
     {
         public int UserNotesId { get; set; }
         [Required]
@@ -19,6 +20,8 @@ namespace RepositaryLayer.Entity
 
         [DefaultValue("2022-05-20T12:12:55.389Z")]
         public string Colour { get; set; }
+        public ICollection<IFormFile> ImagePaths { get; set; }
+        public DateTime Reminder {  get; set; }
         public bool IsArchived { get; set; }
         public bool IsPinned { get; set; }
         public bool IsDeleted { get; set; }

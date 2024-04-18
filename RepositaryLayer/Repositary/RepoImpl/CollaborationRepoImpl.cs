@@ -26,22 +26,21 @@ namespace RepositaryLayer.Repositary.RepoImpl
             _logger = logger;
         }
 
-        public async Task<bool> AddCollaborator(int NoteId, CollaborationRequest Request)
+        public bool AddCollaborator(int NoteId, CollaborationRequest Request, int userId)
         {
             try
             {
-                int? user = await GetUserIdByEmailAsync(Request.Email);
                 var query = @"INSERT INTO Collaboration (UserId, UserNotesId, CollaboratorEmail) 
                     VALUES (@UserId, @UserNotesId, @CollaboratorEmail)";
                 var checkQuery = @"SELECT COUNT(*) FROM Collaboration WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
-                Collaboration coll = new Collaboration { UserNotesId = NoteId, UserId = user.Value, CollaboratorEmail = Request.Email };
+                Collaboration coll = new Collaboration { UserNotesId = NoteId, UserId = userId, CollaboratorEmail = Request.Email };
 
                 using (var connection = _context.CreateConnection())
                 {
-                    int existingCollaborations = await connection.ExecuteScalarAsync<int>(checkQuery, new { UserId = user.Value, UserNotesId = NoteId });
+                    int existingCollaborations =  connection.ExecuteScalar<int>(checkQuery, new { UserId = userId, UserNotesId = NoteId });
                     if (existingCollaborations == 0)
                     {
-                        await connection.ExecuteAsync(query, coll);
+                         connection.Execute(query, coll);
                         _logger.LogInformation("Collaborator added successfully.");
                         return true;
                     }
@@ -59,17 +58,17 @@ namespace RepositaryLayer.Repositary.RepoImpl
             }
         }
 
-        private async Task<int?> GetUserIdByEmailAsync(string email)
-        {
-            var selectQuery = $"SELECT UserId FROM Users WHERE UserEmail = @Email";
+        //private int? GetUserIdByEmailAsync(string email)
+        //{
+        //    var selectQuery = $"SELECT UserId FROM Users WHERE UserEmail = @Email";
 
-            using (var connection = _context.CreateConnection())
-            {
-                // Use parameterized query to prevent SQL injection
-                var userId = await connection.QueryFirstOrDefaultAsync<int?>(selectQuery, new { Email = email });
-                return userId;
-            }
-        }
+        //    using (var connection = _context.CreateConnection())
+        //    {
+        //        // Use parameterized query to prevent SQL injection
+        //        var userId =  connection.QueryFirstOrDefault<int?>(selectQuery, new { Email = email });
+        //        return userId;
+        //    }
+        // }
 
         //private bool IsValidEmail(string email)
         //{
@@ -77,26 +76,24 @@ namespace RepositaryLayer.Repositary.RepoImpl
         //    return Regex.IsMatch(email, pattern);
         //}
 
-        public async Task<IEnumerable<Collaboration>> GetCollaborators(int CollaborationId)
+        public Collaboration GetCollaborators(int collaborationId, int userId)
         {
-            var query = $"SELECT * FROM Collaboration where CollaborationId={CollaborationId}";
+            var query = $"SELECT * FROM Collaboration WHERE CollaborationId = {collaborationId} AND UserId = {userId}";
             using (var connection = _context.CreateConnection())
             {
-                var collaborators = await connection.QueryAsync<Collaboration>(query);
-                return collaborators;
+                return connection.QueryFirstOrDefault<Collaboration>(query);
             }
-
         }
 
-        public async Task<bool> RemoveCollaborator(int CollaborationId)
+
+        public bool RemoveCollaborator(int CollaborationId, int userId)
         {
-            var query = $"DELETE FROM Collaboration WHERE CollaborationId = {CollaborationId}";
+            var query = $"DELETE FROM Collaboration WHERE CollaborationId = {CollaborationId} and UserId={userId}";
               using (var connection = _context.CreateConnection())
                 {
-                int rowsAffected = await connection.ExecuteAsync(query);
+                int rowsAffected =  connection.Execute(query);
                 return rowsAffected > 0; 
                 }
-
         }
     }
 }

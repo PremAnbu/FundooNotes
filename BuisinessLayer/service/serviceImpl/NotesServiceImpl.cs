@@ -11,18 +11,18 @@ using System.Threading.Tasks;
 
 namespace BuisinessLayer.service.serviceImpl
 {
-    public class UserNotesServiceImpl : IUserNotesService
+    public class NotesServiceImpl : INotesService
     {
-        private readonly IUserNotesRepo userNotesRepo;
+        private readonly INotesRepo userNotesRepo;
 
-        public UserNotesServiceImpl(IUserNotesRepo userNotesRepo)
+        public NotesServiceImpl(INotesRepo userNotesRepo)
         {
             this.userNotesRepo = userNotesRepo;
         }
 
-        private UserNotes MapToUserNotesEntity(UserNotesRequest request,int userId)
+        private Notes MapToUserNotesEntity(NotesRequest request,int userId)
         {
-            return new UserNotes
+            return new Notes
             {
                 Description = request.Description,
                 Title = request.Title,
@@ -34,23 +34,27 @@ namespace BuisinessLayer.service.serviceImpl
                // Email = request.Email,
             };
         }
-        public Task<IEnumerable<UserNotesResponce>> CreateUserNotes(UserNotesRequest request, int userId)
+        public List<NotesResponce> CreateUserNotes(NotesRequest request, int userId)
         {
             return userNotesRepo.CreateUserNotes(MapToUserNotesEntity(request,userId));
         }
 
-        public Task<UserNotesResponce> UpdateNote(int noteId, UserNotesRequest updatedNote, int userId)
+        public NotesResponce UpdateNote(int noteId, NotesRequest updatedNote, int userId)
         {
             return userNotesRepo.UpdateNote(noteId, (MapToUserNotesEntity(updatedNote, userId)));
         }
-        public Task<bool> DeleteNote(int noteId)
+        public bool DeleteNote(int noteId, int userId)
         {
-            return userNotesRepo.DeleteNote(noteId);
+            return userNotesRepo.DeleteNote(noteId,userId);
         }
 
-        public Task<IEnumerable<UserNotesResponce>> GetAllNotes(int userId)
+        public List<NotesResponce> GetAllNotes(int userId)
         {
             return userNotesRepo.GetAllNotes(userId);
+        }
+        public List<NotesResponce> GetNoteById(int noteId, int userId)
+        {
+            return userNotesRepo.GetNoteById(noteId,userId);
         }
     }
 }

@@ -4,6 +4,7 @@ using RepositaryLayer.Context;
 using RepositaryLayer.Repositary.IRepo;
 using System.Data;
 using Dapper;
+using RepositaryLayer.GlobalCustomException;
 
 
 namespace RepositaryLayer.Repositary.RepoImpl
@@ -18,7 +19,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
             _logger = logger;
         }
 
-        public async Task<int> createUser(UserEntity entity)
+        public int createUser(UserEntity entity)
         {
             try
             {
@@ -26,7 +27,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 parameters.Add("@UserFirstName", entity.UserFirstName);parameters.Add("@UserLastName", entity.UserLastName);
                 parameters.Add("@UserEmail", entity.UserEmail);parameters.Add("@UserPassword", entity.UserPassword);
                 var connection = context.CreateConnection();
-                return await connection.ExecuteAsync("spCreateUser", parameters, commandType: CommandType.StoredProcedure);
+                return  connection.Execute("spCreateUser", parameters, commandType: CommandType.StoredProcedure);
             }
             catch (Exception ex)
             {
@@ -35,7 +36,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
             }
         }
 
-        public async Task<UserEntity> GetUserByEmail(string email)
+        public UserEntity GetUserByEmail(string email)
         {
             try
             {
@@ -47,7 +48,7 @@ namespace RepositaryLayer.Repositary.RepoImpl
                     if (connection.State != ConnectionState.Open)
                         connection.Open();
 
-                    var user = await connection.QueryFirstOrDefaultAsync<UserEntity>("spGetUserByEmail", parameters,commandType: CommandType.StoredProcedure);
+                    var user = connection.QueryFirstOrDefault<UserEntity>("spGetUserByEmail", parameters,commandType: CommandType.StoredProcedure);
                     Console.WriteLine(user.UserEmail);
                     return user;
                 }
@@ -55,11 +56,11 @@ namespace RepositaryLayer.Repositary.RepoImpl
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error occurred while fetching user by email: {email}");
-                throw; // Re-throw the exception to maintain the error propagation
+                throw new UserNotesNotPresentException("User Not Found By Email"); // Re-throw the exception to maintain the error propagation
             }
         }
 
-        public async Task<int> UpdatePassword(string mailid, string password)
+        public int UpdatePassword(string mailid, string password)
         {
             try
             {
@@ -67,12 +68,12 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 parameters.Add("@UserEmail", mailid);
                 parameters.Add("@UserPassword", password);
                 IDbConnection connection = context.CreateConnection();
-                return await connection.ExecuteAsync("spUpdatePassword", parameters, commandType: CommandType.StoredProcedure);
+                return  connection.Execute("spUpdatePassword", parameters, commandType: CommandType.StoredProcedure);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error occurred while updating password for user with email: {mailid}");
-                throw;
+                throw new UserNotesNotPresentException("User Not Found By Email"); // Re-throw the exception to maintain the error propagation
             }
         }
 

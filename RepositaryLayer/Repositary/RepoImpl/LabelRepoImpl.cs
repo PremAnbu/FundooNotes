@@ -10,34 +10,38 @@ using System.Text;
 using System.Threading.Tasks;
 using RepositaryLayer.GlobalCustomException;
 using RepositaryLayer.Entity;
+using CommonLayer.Models.ResponceDto;
+using System.Data;
+using ModelLayer.Models.ResponceDto;
+using System.Collections;
 
 namespace RepositaryLayer.Repositary.RepoImpl
 {
-    public class NotesLabelRepoImpl : INotesLabelRepo
+    public class LabelRepoImpl : ILabelRepo
     {
         private readonly DapperContext context;
-        private readonly ILogger<NotesLabelRepoImpl> _logger;
-        public NotesLabelRepoImpl(DapperContext context, ILogger<NotesLabelRepoImpl> logger)
+        private readonly ILogger<LabelRepoImpl> _logger;
+        public LabelRepoImpl(DapperContext context, ILogger<LabelRepoImpl> logger)
         {
             this.context = context;
             _logger = logger;
         }
 
-        public async Task<int> CreateNewLabel(string labelName)
+        public int CreateNewLabel(string labelName, int noteId, int userId)
         {
             try
             {
-                if (await IsLabelNameExists(labelName))
+                if ( IsLabelNameExists(labelName))
                 {
                     _logger.LogError("Label name already exists.");
                     throw new LabelNotPresentException ("Label name already exists.");
                 }
 
-                var insertQuery = "INSERT INTO Labels (LabelName) VALUES (@LabelName)";
+                var insertQuery = "INSERT INTO Labels (LabelName,UserId,UserNotesId) VALUES (@LabelName,@UserId,@UserNotesId)";
 
                 using (var connection = context.CreateConnection())
                 {
-                    return await connection.ExecuteAsync(insertQuery, new { LabelName = labelName });
+                    return connection.Execute(insertQuery, new { LabelName = labelName , UserId = userId , UserNotesId =noteId});
                 }
             }
             catch (Exception ex)
@@ -48,21 +52,21 @@ namespace RepositaryLayer.Repositary.RepoImpl
         }
 
 
-        public async Task<int> DeleteLabel(string labelName)
+        public int DeleteLabel(string labelName, int noteId, int userId)
         {
             try
             {
-                if (!await IsLabelNameExists(labelName))
+                if (! IsLabelNameExists(labelName))
                 {
                     // Log and throw custom exception if label name does not exist
                     _logger.LogError("Label name does not exist.");
                     throw new LabelNotPresentException("Label name does not exist.");
                 }
 
-                var deleteQuery = "DELETE FROM Labels WHERE LabelName = @LabelName";
+                var deleteQuery = "DELETE FROM Labels WHERE LabelName = @LabelName and UserId = @UserId and UserNotesId=@UserNotesId";
                 using (var connection = context.CreateConnection())
                 {
-                    return await connection.ExecuteAsync(deleteQuery, new { LabelName = labelName });
+                    return connection.Execute(deleteQuery, new { LabelName = labelName, UserId = userId, UserNotesId = noteId });
                 }
             }
             catch (Exception ex)
@@ -72,19 +76,19 @@ namespace RepositaryLayer.Repositary.RepoImpl
             }
         }
 
-        public async Task<int> UpdateLabelName(string labelName, string newLabelName)
+        public int UpdateLabelName(string labelName, string newLabelName, int noteId, int userId)
         {
             try
             {
-                if (!await IsLabelNameExists(labelName))
+                if (! IsLabelNameExists(labelName))
                 {
                     _logger.LogError("Label name does not exist.");
                     throw new LabelNotPresentException("Label name does not exist.");
                 }
-                var updateQuery = "UPDATE Labels SET LabelName = @NewLabelName WHERE LabelName = @LabelName";
+                var updateQuery = "UPDATE Labels SET LabelName = @NewLabelName WHERE LabelName = @LabelName,UserId=@UserId";
                 using (var connection = context.CreateConnection())
                 {
-                    return await connection.ExecuteAsync(updateQuery, new { NewLabelName = newLabelName, LabelName = labelName });
+                    return  connection.Execute(updateQuery, new { NewLabelName = newLabelName, LabelName = labelName , UserId = userId });
                 }
             }
             catch (Exception ex)
@@ -95,14 +99,14 @@ namespace RepositaryLayer.Repositary.RepoImpl
         }
 
 
-        public async Task<bool> IsLabelNameExists(string labelName)
+        public bool IsLabelNameExists(string labelName)
         {
             try
             {
                 using (var connection = context.CreateConnection())
                 {
                     var query = "SELECT COUNT(*) FROM Labels WHERE LabelName = @LabelName";
-                    var count = await connection.QueryFirstOrDefaultAsync<int>(query, new { LabelName = labelName });
+                    var count =  connection.QueryFirstOrDefault<int>(query, new { LabelName = labelName });
                     return count > 0;
                 }
             }
@@ -112,6 +116,29 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 throw;
             }
         }
+
+        public List<LabelResponce> GetLabel(int userId)
+        {
+            try
+            {
+                string query = "SELECT * FROM Labels WHERE UserId = @UserId";
+
+                using (var connection = context.CreateConnection())
+                {
+                    var parameters = new { UserId = userId };
+                    var labels =  connection.Query<LabelResponce>(query, parameters);
+                    return labels.Reverse().ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error occurred while fetching labels for user with ID: {userId}");
+                throw;
+            }
+        }
+
+
+
 
     }
 }

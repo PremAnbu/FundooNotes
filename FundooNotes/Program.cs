@@ -50,10 +50,10 @@ builder.Services.AddScoped<IUserRepo, UserRepoImpl>();
 builder.Services.AddScoped<ICollaborationService, CollaborationServiceImpl>();
 builder.Services.AddScoped<ICollaborationRepo, CollaborationRepoImpl>();
 
-builder.Services.AddScoped<IUserNotesService, UserNotesServiceImpl>();
-builder.Services.AddScoped<IUserNotesRepo, UserNotesRepoImpl>();
+builder.Services.AddScoped<INotesService, NotesServiceImpl>();
+builder.Services.AddScoped<INotesRepo, NotesRepoImpl>();
 
-builder.Services.AddScoped<INotesLabelRepo, NotesLabelRepoImpl>();
+builder.Services.AddScoped<ILabelRepo, LabelRepoImpl>();
 builder.Services.AddScoped<INotesLabelService, NotesLabelServiceImpl>();
 
 builder.Services.AddControllers();

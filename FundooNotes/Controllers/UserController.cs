@@ -48,66 +48,43 @@ namespace FundooNotes.Controllers
      //   [AllowAnonymous] // Allow this endpoint to be accessed without authentication
         [HttpPost]
         [UserExceptionHandlerFilter]
-        public async Task<IActionResult> createUser(UserRequest request)
+        public ResponceStructure<string> createUser(UserRequest request)
         {
-                try
+            try
+            {
+                var result = service.createUser(request);
+                if (result == 1)
                 {
-                   var result = await service.createUser(request);
-                   if (result == 1)
-                   {
                     try
                     {
                         // Produce Kafka message
-                        var message = $"{request.Email} : User register Successfully";
+                        var message = $"{request.Email} : User registered successfully";
                         var kafkaMessage = new Message<string, string>
                         {
                             Key = "user_created",
                             Value = message
                         };
-                        await _kafkaProducer.ProduceAsync(_configuration["Kafka:Topic"], kafkaMessage);
-
-                        //return Ok(message);
+                        _kafkaProducer.ProduceAsync(_configuration["Kafka:Topic"], kafkaMessage);
+                        return new ResponceStructure<string>(true, "User registration successful");
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex.Message);
-                        return StatusCode(StatusCodes.Status500InternalServerError, $"Error: {ex.Message}");
+                        return new ResponceStructure<string>(false, $"Error: {ex.Message}");
                     }
-                    var response = new ResponceStructure<UserResponce>
-                        {
-                            Success = true,
-                            Message = "User Registration Successful"
-                        };
-                        return Ok(response);
-                    }
-                    else
-                        return BadRequest("invalid input");
                 }
-                catch (Exception ex)
+                else
                 {
-                    if (ex is InvalidUserInputException)
-                    {
-                       var response = new ResponceStructure<UserResponce>
-                       {
-                        Success = false,
-                        Message = ex.Message
-                       };
-                    _logger.LogError(ex.Message);
-
-                    return BadRequest(response);
-                    }
-                    else 
-                    {
-                       var response = new ResponceStructure<UserResponce>
-                       {
-                        Success = false,
-                        Message = ex.Message
-                       };
-                    _logger.LogError(ex.Message);
-
-                    return BadRequest(response);
-                    }
+                    return new ResponceStructure<string>(false, "Invalid Input");
                 }
+            }
+            catch (Exception ex)
+            {
+                string errorMessage = ex is InvalidUserInputException ? ex.Message : "An unexpected error occurred";
+                _logger.LogError(ex.Message);
+
+                return new ResponceStructure<string>(false, errorMessage);
+            }
         }
         private async Task ConsumeKafkaMessages(CancellationToken cancellationToken)
         {
@@ -134,47 +111,30 @@ namespace FundooNotes.Controllers
       //  [AllowAnonymous] // Allow this endpoint to be accessed without authentication
         [HttpGet("{Email}/{password}")]
         [UserExceptionHandlerFilter]
-        public async Task<IActionResult> Login(String Email, String password)
+        public ResponceStructure<string> Login(String Email, String password)
         {
             string token=null;
                 try
                 {
-                UserResponce Responce = await service.Login(Email, password);
+                UserResponce Responce =  service.Login(Email, password);
                 if (Responce != null)
                 {
                      token = GenerateToken(Responce);
                 }
-                var response = new ResponceStructure<string>
-                    {
-                        Message = "Login Sucessfull",
-                        Data = token
-                    };
                 _logger.LogInformation("Success");
-                    return Ok(response);
+                return new ResponceStructure<string>(200,"Login Sucessfull", token);
                 }
                 catch (Exception ex)
                 {
                     if (ex is UserNotFoundException)
                     {
-                        var response = new ResponceStructure<string>
-                        {
-                            Success = false,
-                            Message = ex.Message
-                        };
                     _logger.LogError(ex.Message);
-
-                    return Conflict(response);
+                    return new ResponceStructure<string>(400,false, ex.Message);
                     }
-                    else 
+                else 
                     {
-                       var response = new ResponceStructure<string>
-                       {
-                        Success = false,
-                        Message = ex.Message
-                       };
                     _logger.LogError(ex.Message);
-
-                    return BadRequest(response);
+                    return new ResponceStructure<string>(400, false, ex.Message);
                     }
                 }
         }
@@ -202,36 +162,18 @@ namespace FundooNotes.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        [HttpPut("{Email}")]
+        [HttpPut("Email")]
         [UserExceptionHandlerFilter]
-        public async Task<IActionResult> ChangePasswordRequest(String Email)
+        public ResponceStructure<string> ChangePasswordRequest(String Email)
         {
-            return Ok( await service.ChangePasswordRequest(Email));
+            return new ResponceStructure<string>(200, service.ChangePasswordRequest(Email));
         }
 
-        [HttpPut("{otp}/{new_password}")]
+        [HttpPut("NewPassword")]
         [UserExceptionHandlerFilter]
-        public async Task<IActionResult> ChangePassword(String otp,String password)
+        public ResponceStructure<string> ChangePassword(String otp,String password)
         {
-            return Ok(await service.ChangePassword(otp,password));
+            return new ResponceStructure<string>(200, service.ChangePassword(otp,password));
         }
-
-
-        //[ApiExplorerSettings(IgnoreApi = true)]
-        //public void Dispose()
-        //{
-        //    Dispose(true);
-        //    GC.SuppressFinalize(this);
-        //}
-
-        //protected virtual void Dispose(bool disposing)
-        //{
-        //    if (disposing)
-        //    {
-        //        _kafkaProducer?.Dispose();
-        //        _kafkaConsumer?.Dispose();
-        //        _cancellationTokenSource?.Dispose();
-        //    }
-        //}
     }
 }
