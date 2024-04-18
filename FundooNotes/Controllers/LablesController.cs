@@ -1,10 +1,13 @@
 ﻿using Azure.Core;
 using BuisinessLayer.service.Iservice;
+using CommonLayer.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using ModelLayer.Models.ResponceDto;
 using RepositaryLayer.Entity;
+using System.Security.Claims;
 
 namespace FundooNotes.Controllers
 {
@@ -20,33 +23,45 @@ namespace FundooNotes.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateNewLabel(string labelName)
+        public  ResponceStructure<string> CreateNewLabel(string labelName,int notesId)
         {
-           var result = await service.CreateNewLabel(labelName);
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var result =  service.CreateNewLabel(labelName, notesId, userId);
             if (result==1)
-                return Ok("Label Created successfully.");
+                return new ResponceStructure<string>(200,"Label Created successfully.");
             else
-                return BadRequest("Failed to add Label.");
+                return new ResponceStructure<string>(500, "Label Created successfully.");
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateLabelName(string labelName,string newLabelName)
+        public  ResponceStructure<string> UpdateLabelName(string labelName,string newLabelName,int noteId)
         {
-            var result=await service.UpdateLabelName(labelName,newLabelName);
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var result = service.UpdateLabelName(labelName,newLabelName,noteId,userId);
             if (result == 1)
-                return Ok("Label Name Updated  successfully.");
+                return new ResponceStructure<string>(200,"Label Name Updated  successfully.");
             else
-                return BadRequest("Failed to Update  Label Name");
+                return new ResponceStructure<string>(500,"Failed to Update  Label Name");
         }
 
         [HttpDelete]
-        public async Task<IActionResult> DeleteLabel(string labelName)
+        public ResponceStructure<string> DeleteLabel(string labelName,int noteId)
         {
-            var result = await service.DeleteLabel(labelName);
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var result =  service.DeleteLabel(labelName,noteId,userId);
             if (result == 1)
-                return Ok("Label Deleted successfully.");
+                return new ResponceStructure<string>(200,"Label Deleted successfully.");
             else
-                return BadRequest("Failed to Delete Label.");
+                return new ResponceStructure<string>(500,"Failed to Delete Label.");
+        }
+
+        [HttpGet("GetLabel")]
+        public  ResponceStructure<List<LabelResponce>> GetLabel()
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var label =  service.GetLabel(userId);
+            return new ResponceStructure<List<LabelResponce>>(200,label);
+
         }
     }
 }

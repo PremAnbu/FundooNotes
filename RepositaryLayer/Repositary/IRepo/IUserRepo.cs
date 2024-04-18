@@ -10,8 +10,8 @@ namespace RepositaryLayer.Repositary.IRepo
 {
     public interface IUserRepo
     {
-      public Task<int> createUser(UserEntity entity);
-       public Task<UserEntity> GetUserByEmail(string email);
-       public Task<int> UpdatePassword(string mailid, string password);
+       public int createUser(UserEntity entity);
+       public UserEntity GetUserByEmail(string email);
+       public int UpdatePassword(string mailid, string password);
     }
 }

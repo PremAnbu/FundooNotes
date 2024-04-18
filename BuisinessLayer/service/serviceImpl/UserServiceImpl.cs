@@ -58,17 +58,17 @@ namespace BuisinessLayer.service.serviceImpl
             };
         }
 
-        public Task<int> createUser(UserRequest request)
+        public int createUser(UserRequest request)
         {
           return UserRepo.createUser(MapToEntity(request));
         }
 
-        public Task<UserResponce> Login(string Email, string password)
+        public UserResponce Login(string Email, string password)
         {
             UserEntity entity ;
             try
             {
-                 entity = UserRepo.GetUserByEmail(Email).Result;
+                 entity = UserRepo.GetUserByEmail(Email);
             }
             catch(AggregateException e)
             {
@@ -76,7 +76,7 @@ namespace BuisinessLayer.service.serviceImpl
             }
             if(password.Equals(Decrypt(entity.UserPassword)))
             {
-                return Task.FromResult(MapToResponce(entity));
+                return MapToResponce(entity);
             }
             else
             {
@@ -84,11 +84,11 @@ namespace BuisinessLayer.service.serviceImpl
             }
 
         }
-        public Task<String> ChangePasswordRequest(string Email)
+        public String ChangePasswordRequest(string Email)
         {
             try
             {
-                 entity = UserRepo.GetUserByEmail(Email).Result;
+                 entity = UserRepo.GetUserByEmail(Email);
             }
             catch (Exception e)
             {
@@ -107,14 +107,14 @@ namespace BuisinessLayer.service.serviceImpl
             Console.WriteLine(otp+" ,"+Email);
             MailSenderClass.sendMail(Email, generatedotp);
             //Console.WriteLine(otp);
-           return Task.FromResult("MailSended Successfully ✔️");
+           return "MailSended Successfully ✔️";
             
         }
-        public Task<string> ChangePassword(string otp,string password)
+        public string ChangePassword(string otp,string password)
         {
             if (otp.Equals(null))
             {
-                return Task.FromResult("Generate Otp First");
+                return "Generate Otp First";
             }
             if (Decrypt(entity.UserPassword).Equals(password))
             {
@@ -125,22 +125,22 @@ namespace BuisinessLayer.service.serviceImpl
             {
                 if (UserServiceImpl.otp.Equals(otp))
                 {
-                   if( UserRepo.UpdatePassword(mailid,Encrypt(password)).Result==1)
+                   if( UserRepo.UpdatePassword(mailid,Encrypt(password))==1)
                     {
                         entity = null;otp = null;mailid = null;
-                        return Task.FromResult("password changed successfully");
+                        return "password changed successfully";
                     }
                 }
                 else
                 {
-                    return Task.FromResult("otp miss matching");
+                    return "otp miss matching";
                 }
             }
             else
             {
-                return Task.FromResult("regex is mismatching");
+                return "regex is mismatching";
             }
-            return Task.FromResult("password not changed");
+            return "password not changed";
             
         }
     }

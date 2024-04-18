@@ -1,5 +1,6 @@
 ﻿using Azure.Core;
 using BuisinessLayer.service.Iservice;
+using CommonLayer.Models;
 using CommonLayer.Models.RequestDto;
 using CommonLayer.Models.ResponceDto;
 using Microsoft.AspNetCore.Authorization;
@@ -27,51 +28,54 @@ namespace FundooNotes.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddCollaborator(int NoteId, [FromBody] CollaborationRequest request)
-        { 
-            var result=await collaborationBL.AddCollaborator(NoteId, request);
+        public ResponceStructure<string> AddCollaborator(int NoteId, [FromBody] CollaborationRequest request)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var result = collaborationBL.AddCollaborator(NoteId, request,userId);
             if (result)
-                return Ok("Collaboration added successfully.");
+                return new ResponceStructure<string>(200,"Collaboration added successfully.");
             else
-                return BadRequest("Failed to add collaboration.");
+                return new ResponceStructure<string>(500,"Failed to add collaboration.");
         }
 
-        [HttpGet("{collaboration_id}")]
-        public async Task<IActionResult> GetCollaborator(int CollaborationId)
+        [HttpGet]
+        public ResponceStructure<Collaboration> GetCollaborator(int CollaborationId)
         {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
             //Redis data structure create key and value p
             var cacheKey = $"Labels_{CollaborationId}";
-            var cachedLabels = await _cache.GetStringAsync(cacheKey);
+            var cachedLabels =  _cache.GetString(cacheKey);
 
             // Return cached data if available
             if (!string.IsNullOrEmpty(cachedLabels))
             {
                 Console.WriteLine("cashe memeory");
-                return Ok(JsonSerializer.Deserialize<Collaboration>(cachedLabels));
+                return new ResponceStructure<Collaboration>(200,JsonSerializer.Deserialize<Collaboration>(cachedLabels));
             }
             // Cache data if not already cached
              
-            var collaborations = await collaborationBL.GetCollaborators(CollaborationId);
+            var collaborations =  collaborationBL.GetCollaborators(CollaborationId,userId);
             if (collaborations != null)
             {
                 var cacheOptions = new DistributedCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) // Cache expiration time
                 };
-                await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(collaborations), cacheOptions);
-                return Ok(collaborations);
+                 _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(collaborations), cacheOptions);
+                return new ResponceStructure<Collaboration>(200,collaborations);
             }
-            return NotFound("No collaborations found for the specified collaborations id.");
+            return new ResponceStructure<Collaboration>(500,"No collaborations found for the specified collaborations id.");
         }
 
-        [HttpDelete("{collaboration_id}")]
-        public async Task<IActionResult> RemoveCollaborator(int CollaborationId)
+        [HttpDelete]
+        public  ResponceStructure<string> RemoveCollaborator(int CollaborationId)
         {
-            var result = await collaborationBL.RemoveCollaborator(CollaborationId);
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var result =  collaborationBL.RemoveCollaborator(CollaborationId,userId);
             if (result)
-                return Ok("Collaborator removed successfully.");
+                return new ResponceStructure<string>(200,"Collaborator removed successfully.");
             else
-                return BadRequest("Failed to remove collaborator.");
+                return new ResponceStructure<string>(500,"Failed to remove collaborator.");
         }
     }
 }
