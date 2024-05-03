@@ -19,12 +19,12 @@ namespace RepositaryLayer.Entity
         public string Description { get; set; }
 
         [DefaultValue("2022-05-20T12:12:55.389Z")]
-        public string Colour { get; set; }
-        public ICollection<IFormFile> ImagePaths { get; set; }
-        public DateTime Reminder {  get; set; }
-        public bool IsArchived { get; set; }
-        public bool IsPinned { get; set; }
-        public bool IsDeleted { get; set; }
+        public string? Colour { get; set; }
+        public ICollection<IFormFile>? ImagePaths { get; set; }
+        public DateTime? Reminder {  get; set; }
+        public bool? IsArchived { get; set; }
+        public bool? IsPinned { get; set; }
+        public bool? IsDeleted { get; set; }
         public int UserId { get; set; }
         public string Email {  get; set; }
 

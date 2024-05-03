@@ -47,6 +47,20 @@ namespace CommonLayer.Models
             StatusCode = statusCode;
             Data = data;
         }
+
+        public ResponceStructure(string message, T? data)
+        {
+            Message = message;
+            Data = data;
+        }
+        public ResponceStructure( T? data)
+        {
+            Data = data;
+        }
+        public ResponceStructure(string message)
+        {
+            Message = message;
+        }
         public ResponceStructure(int statusCode, bool success , T? data)
         {
             StatusCode = statusCode;

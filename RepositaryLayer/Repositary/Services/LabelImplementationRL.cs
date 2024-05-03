@@ -17,11 +17,11 @@ using System.Collections;
 
 namespace RepositaryLayer.Repositary.RepoImpl
 {
-    public class LabelRepoImpl : ILabelRepo
+    public class LabelImplementationRL : ILabelRepo
     {
         private readonly DapperContext context;
-        private readonly ILogger<LabelRepoImpl> _logger;
-        public LabelRepoImpl(DapperContext context, ILogger<LabelRepoImpl> logger)
+        private readonly ILogger<LabelImplementationRL> _logger;
+        public LabelImplementationRL(DapperContext context, ILogger<LabelImplementationRL> logger)
         {
             this.context = context;
             _logger = logger;

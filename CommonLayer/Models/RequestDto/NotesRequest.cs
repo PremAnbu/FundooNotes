@@ -11,11 +11,11 @@ namespace CommonLayer.Models.RequestDto
     {
         [Required]
         public string Title { get; set; }
-        public string? Description { get; set; } = string.Empty;
-        public string Colour { get; set; } = string.Empty;
-        public DateTime Reminder {  get; set; }
-        public bool IsArchived { get; set; }
-        public bool IsPinned { get; set; }
-        public bool IsDeleted { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public string? Colour { get; set; } = string.Empty;
+        public DateTime? Reminder {  get; set; }
+        public bool? IsArchived { get; set; }
+        public bool? IsPinned { get; set; }
+        public bool? IsDeleted { get; set; }
     }
 }

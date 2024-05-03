@@ -11,11 +11,11 @@ using System.Threading.Tasks;
 
 namespace BuisinessLayer.service.serviceImpl
 {
-    public class NotesServiceImpl : INotesService
+    public class NotesImplementationBL : INotes
     {
         private readonly INotesRepo userNotesRepo;
 
-        public NotesServiceImpl(INotesRepo userNotesRepo)
+        public NotesImplementationBL(INotesRepo userNotesRepo)
         {
             this.userNotesRepo = userNotesRepo;
         }
@@ -55,6 +55,20 @@ namespace BuisinessLayer.service.serviceImpl
         public List<NotesResponce> GetNoteById(int noteId, int userId)
         {
             return userNotesRepo.GetNoteById(noteId,userId);
+        }
+
+        public int UpdateArchive(int noteId, int userId)
+        {
+            return userNotesRepo.UpdateArchive(noteId,userId);
+        }
+        public int UpdateTrash(int noteId, int userId)
+        {
+            return userNotesRepo.UpdateTrash(noteId, userId);
+        }
+        public int UpdateNoteColour(int noteId,int userId, string colour)
+        {
+            return userNotesRepo.UpdateNoteColour(noteId,userId,colour);
+
         }
     }
 }

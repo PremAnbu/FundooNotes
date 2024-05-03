@@ -15,6 +15,9 @@ namespace RepositaryLayer.Repositary.IRepo
         public bool DeleteNote(int noteId,int userId);
         public List<NotesResponce> GetAllNotes(int userId);
         public List<NotesResponce> GetNoteById(int noteId,int userId);
+        public int UpdateArchive(int noteId, int userId);
+        public int UpdateTrash(int noteId, int userId);
+        public int UpdateNoteColour(int noteId, int userId,string colour);
 
     }
 }

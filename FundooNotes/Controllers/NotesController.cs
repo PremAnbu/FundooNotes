@@ -18,9 +18,9 @@ namespace FundooNotes.Controllers
     [ApiController]
     public class NotesController : ControllerBase
     {
-        private readonly INotesService service;
+        private readonly INotes service;
         private readonly IDistributedCache _cache;
-        public NotesController(INotesService service, IDistributedCache cache)
+        public NotesController(INotes service, IDistributedCache cache)
         {
             this.service = service;
             _cache = cache;
@@ -30,7 +30,7 @@ namespace FundooNotes.Controllers
         public ResponceStructure<List<NotesResponce>> CreateUserNotes(NotesRequest request)
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            return new ResponceStructure<List<NotesResponce>>(200, service.CreateUserNotes(request, userId));
+            return new ResponceStructure<List<NotesResponce>>(service.CreateUserNotes(request, userId));
         }
 
         [AllowAnonymous]
@@ -38,7 +38,7 @@ namespace FundooNotes.Controllers
         public  ResponceStructure<NotesResponce> UpdateNoteAsync(int noteId, [FromBody] NotesRequest updatedNote)
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-            return new ResponceStructure<NotesResponce>(200,service.UpdateNote(noteId, updatedNote, userId));
+            return new ResponceStructure<NotesResponce>(service.UpdateNote(noteId, updatedNote, userId));
         }
 
         [HttpDelete]
@@ -48,9 +48,9 @@ namespace FundooNotes.Controllers
 
             var result =  service.DeleteNote(noteId,userId);
             if (result)
-                return new ResponceStructure<string>(200,"UserNotes removed successfully.");
+                return new ResponceStructure<string>("UserNotes removed successfully.");
             else
-                return new ResponceStructure<string>(400,"Failed to remove UserNotes.");
+                return new ResponceStructure<string>("Failed to remove UserNotes.");
         }
 
         [HttpGet]
@@ -58,27 +58,29 @@ namespace FundooNotes.Controllers
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
             //Redis data structure create key and value p
-            var cacheKey = $"Labels_{userId}";
-            var cachedLabels =  _cache.GetString(cacheKey);
+            //var cacheKey = $"Labels_{userId}";
+            //var cachedLabels =  _cache.GetString(cacheKey);
 
-            // Return cached data if available
-            if (!string.IsNullOrEmpty(cachedLabels))
-            {
-                Console.WriteLine("cashe memeory");
-                return new ResponceStructure<List<NotesResponce>>(200,JsonSerializer.Deserialize<List<NotesResponce>>(cachedLabels));
-            }
+            //// Return cached data if available
+            //if (!string.IsNullOrEmpty(cachedLabels))
+            //{
+            //    Console.WriteLine("cashe memeory");
+            //    return new ResponceStructure<List<NotesResponce>>(200,JsonSerializer.Deserialize<List<NotesResponce>>(cachedLabels));
+           // }
             // Cache data if not already cached
             var userNotes =  service.GetAllNotes(userId);
-            if (userNotes != null)
-            {
-                var cacheOptions = new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) // Cache expiration time
-                };
-                 _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(userNotes), cacheOptions);
-                return new ResponceStructure<List<NotesResponce>>(200, userNotes);
-            }
-            return new ResponceStructure < List < NotesResponce >> (404,"No userNotes found for the specified user Email.");
+            return new ResponceStructure<List<NotesResponce>>( userNotes);
+
+            //if (userNotes != null)
+            //{
+            //    var cacheOptions = new DistributedCacheEntryOptions
+            //    {
+            //        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) // Cache expiration time
+            //    };
+            //     _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(userNotes), cacheOptions);
+            //    return new ResponceStructure<List<NotesResponce>>(200, userNotes);
+            //}
+           // return new ResponceStructure < List < NotesResponce >> (404,"No userNotes found for the specified user Email.");
         }
 
         [HttpGet("GetByNoteId")]
@@ -86,8 +88,32 @@ namespace FundooNotes.Controllers
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var userNotes =  service.GetNoteById(noteId,userId);
-            return new ResponceStructure<List<NotesResponce>>(200, userNotes);
+            return new ResponceStructure<List<NotesResponce>>(userNotes);
 
+        }
+
+        [HttpPut("UpdateColourByNoteId")]
+        public int UpdateNoteColour(int noteId,string colour)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var val = service.UpdateNoteColour(noteId,userId,colour);
+            return val;
+        }
+
+        [HttpPut("UpdateArchiveByNoteId")]
+        public int UpdateArchive(int noteId)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var val = service.UpdateArchive(noteId, userId);
+            return val;
+        }
+
+        [HttpPut("UpdateTrashByNoteId")]
+        public int UpdateTrash(int noteId)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var val = service.UpdateTrash(noteId, userId);
+            return val;
         }
     }
 }

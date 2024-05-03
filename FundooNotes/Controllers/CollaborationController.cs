@@ -18,10 +18,10 @@ namespace FundooNotes.Controllers
     [ApiController]
     public class CollaborationController : ControllerBase
     {
-        public readonly ICollaborationService collaborationBL;
+        public readonly ICollaboration collaborationBL;
         private readonly IDistributedCache _cache;
 
-        public CollaborationController(ICollaborationService collaborationBL, IDistributedCache cache)
+        public CollaborationController(ICollaboration collaborationBL, IDistributedCache cache)
         {
             this.collaborationBL = collaborationBL;
             _cache = cache;
@@ -33,9 +33,9 @@ namespace FundooNotes.Controllers
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var result = collaborationBL.AddCollaborator(NoteId, request,userId);
             if (result)
-                return new ResponceStructure<string>(200,"Collaboration added successfully.");
+                return new ResponceStructure<string>("Collaboration added successfully.");
             else
-                return new ResponceStructure<string>(500,"Failed to add collaboration.");
+                return new ResponceStructure<string>("Failed to add collaboration.");
         }
 
         [HttpGet]
@@ -50,7 +50,7 @@ namespace FundooNotes.Controllers
             if (!string.IsNullOrEmpty(cachedLabels))
             {
                 Console.WriteLine("cashe memeory");
-                return new ResponceStructure<Collaboration>(200,JsonSerializer.Deserialize<Collaboration>(cachedLabels));
+                return new ResponceStructure<Collaboration>(JsonSerializer.Deserialize<Collaboration>(cachedLabels));
             }
             // Cache data if not already cached
              
@@ -62,9 +62,9 @@ namespace FundooNotes.Controllers
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) // Cache expiration time
                 };
                  _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(collaborations), cacheOptions);
-                return new ResponceStructure<Collaboration>(200,collaborations);
+                return new ResponceStructure<Collaboration>(collaborations);
             }
-            return new ResponceStructure<Collaboration>(500,"No collaborations found for the specified collaborations id.");
+            return new ResponceStructure<Collaboration>("No collaborations found for the specified collaborations id.");
         }
 
         [HttpDelete]
@@ -73,9 +73,9 @@ namespace FundooNotes.Controllers
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var result =  collaborationBL.RemoveCollaborator(CollaborationId,userId);
             if (result)
-                return new ResponceStructure<string>(200,"Collaborator removed successfully.");
+                return new ResponceStructure<string>("Collaborator removed successfully.");
             else
-                return new ResponceStructure<string>(500,"Failed to remove collaborator.");
+                return new ResponceStructure<string>("Failed to remove collaborator.");
         }
     }
 }

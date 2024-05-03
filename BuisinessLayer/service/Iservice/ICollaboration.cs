@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace BuisinessLayer.service.Iservice
 {
-    public interface ICollaborationService
+    public interface ICollaboration             
     {
        public bool AddCollaborator(int NoteId, CollaborationRequest Request,int userId);
        public Collaboration GetCollaborators(int CollaborationId,int userId);
