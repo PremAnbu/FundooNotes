@@ -39,21 +39,34 @@ builder.Services.AddSingleton<IConsumer<string, string>>(sp =>
     return consumer;
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        builder =>
+        {
+            builder.WithOrigins("http://localhost:4200", "https://localhost:7004")
+                   .AllowAnyMethod()
+                   .AllowAnyHeader()
+            .AllowAnyOrigin();
+        });
+});
+
+
 builder.Services.AddHttpContextAccessor();
 
 // Add services to the container.
 builder.Services.AddSingleton<DapperContext>();
 
-builder.Services.AddScoped<IUserService, UserServiceImpl>();
-builder.Services.AddScoped<IUserRepo, UserRepoImpl>();
+builder.Services.AddScoped<BuisinessLayer.service.Iservice.IUser, UserImplementationBL>();
+builder.Services.AddScoped<IUserRepo, UserImplementationRL>();
 
-builder.Services.AddScoped<ICollaborationService, CollaborationServiceImpl>();
-builder.Services.AddScoped<ICollaborationRepo, CollaborationRepoImpl>();
+builder.Services.AddScoped<ICollaboration, CollaborationImplementationBL>();
+builder.Services.AddScoped<ICollaborationRepo, CollaborationImplementationRL>();
 
-builder.Services.AddScoped<INotesService, NotesServiceImpl>();
-builder.Services.AddScoped<INotesRepo, NotesRepoImpl>();
+builder.Services.AddScoped<INotes, NotesImplementationBL>();
+builder.Services.AddScoped<INotesRepo, NotesImplementationRL>();
 
-builder.Services.AddScoped<ILabelRepo, LabelRepoImpl>();
+builder.Services.AddScoped<ILabelRepo, LabelImplementationRL>();
 builder.Services.AddScoped<INotesLabelService, NotesLabelServiceImpl>();
 
 builder.Services.AddControllers();
@@ -61,33 +74,86 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
-// Configure Swagger/OpenAPI and Swagger generation options
+// Get the secret key from the configuration
+var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:Secret"]);
+
+// Add JWT Bearer authentication options
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            // Validate the JWT signature
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+
+            // For simplicity in development, disable issuer and audience validation
+            ValidateIssuer = false,
+            ValidateAudience = false
+        };
+    });
+
+// Configure Swagger/OpenAPI
 builder.Services.AddSwaggerGen(c =>
 {
-    // Define Swagger document Meta Data (version and Title)
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "FundooNotes", Version = "v1" });
-    //For Authorization
-    var securitySchema = new OpenApiSecurityScheme
-    {
-        Description = "Using the Authorization header with the Bearer scheme.",
-        Name = "Authorization",         // JWT Token Header Name
-        In = ParameterLocation.Header,  // Location of the JWT token in the request headers
-        Type = SecuritySchemeType.Http, // Http type of Security Scheme
-        Scheme = "bearer",
-        Reference = new OpenApiReference
-        {
-            Type = ReferenceType.SecurityScheme,
-            Id = "Bearer"
-        }
-    };
-    c.AddSecurityDefinition("Bearer", securitySchema);
+    // Define the Swagger document metadata
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
 
-    // Specify security requirements for Swagger endpoints
+    // Add security definition for JWT authentication
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+
+    // Add security requirements for Swagger endpoints
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
                 {
-                    { securitySchema, new[] { "Bearer" } }
-                });
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
 });
+
+// Configure Swagger/OpenAPI and Swagger generation options
+//builder.Services.AddSwaggerGen(c =>
+//{
+//    // Define Swagger document Meta Data (version and Title)
+//    c.SwaggerDoc("v1", new OpenApiInfo { Title = "FundooNotes", Version = "v1" });
+//    //For Authorization
+//    var securitySchema = new OpenApiSecurityScheme
+//    {
+//        Description = "Using the Authorization header with the Bearer scheme.",
+//        Name = "Authorization",         // JWT Token Header Name
+//        In = ParameterLocation.Header,  // Location of the JWT token in the request headers
+//        Type = SecuritySchemeType.Http, // Http type of Security Scheme
+//        Scheme = "bearer",
+//        Reference = new OpenApiReference
+//        {
+//            Type = ReferenceType.SecurityScheme,
+//            Id = "Bearer"
+//        }
+//    };
+//    c.AddSecurityDefinition("Bearer", securitySchema);
+
+//    // Specify security requirements for Swagger endpoints
+//    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+//                {
+//                    { securitySchema, new[] { "Bearer" } }
+//                });
+//});
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -99,31 +165,31 @@ builder.Services.AddDistributedMemoryCache();
 //jwt
 // Add JWT authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]));
+//var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]));
 
-builder.Services.AddAuthentication(au =>
-{
-    au.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    au.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    au.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(jwt => {
-    jwt.RequireHttpsMetadata = true;
-    jwt.SaveToken = true;
-    jwt.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        //Validate the expiration and not before values in the token
-        ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero,
-        // Specify whether the server should validate the issuerSigningkey
-        ValidateIssuerSigningKey = true,
-        // Set the issuerSigningkey to verify the JWT signature
-        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-    };
-});
+//builder.Services.AddAuthentication(au =>
+//{
+//    au.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//    au.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+//    au.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+//}).AddJwtBearer(jwt => {
+//    jwt.RequireHttpsMetadata = true;
+//    jwt.SaveToken = true;
+//    jwt.TokenValidationParameters = new TokenValidationParameters
+//    {
+//        ValidateIssuer = true,
+//        ValidateAudience = true,
+//        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+//        ValidAudience = builder.Configuration["Jwt:Audience"],
+//        //Validate the expiration and not before values in the token
+//        ValidateLifetime = true,
+//        ClockSkew = TimeSpan.Zero,
+//        // Specify whether the server should validate the issuerSigningkey
+//        ValidateIssuerSigningKey = true,
+//        // Set the issuerSigningkey to verify the JWT signature
+//        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+//    };
+//});
 
 //loggers
 //builder.Services.AddLogging(config =>
@@ -149,6 +215,9 @@ builder.Services.AddSession(options =>
 //Ending...
 var app = builder.Build();
 
+app.UseCors("AllowSpecificOrigin");
+app.UseCors();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -162,6 +231,7 @@ if (app.Environment.IsDevelopment())
         .WithHeaders(HeaderNames.ContentType);
     });
 }
+
 // Configure the HTTP request pipeline
 app.UseHttpsRedirection();
 

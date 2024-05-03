@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace RepositaryLayer.Repositary.IRepo
 {
-    public interface IUserRepo
+    public interface IUserRepo  
     {
        public int createUser(UserEntity entity);
        public UserEntity GetUserByEmail(string email);

@@ -15,12 +15,12 @@ using System.Threading.Tasks;
 
 namespace RepositaryLayer.Repositary.RepoImpl
 {
-    public class CollaborationRepoImpl : ICollaborationRepo
+    public class CollaborationImplementationRL : ICollaborationRepo
     {
         private readonly DapperContext _context;
-        private readonly ILogger<CollaborationRepoImpl> _logger;
+        private readonly ILogger<CollaborationImplementationRL> _logger;
 
-        public CollaborationRepoImpl(DapperContext context, ILogger<CollaborationRepoImpl> logger)
+        public CollaborationImplementationRL(DapperContext context, ILogger<CollaborationImplementationRL> logger)
         {
             _context = context;
             _logger = logger;

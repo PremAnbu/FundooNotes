@@ -9,11 +9,11 @@ using RepositaryLayer.GlobalCustomException;
 
 namespace RepositaryLayer.Repositary.RepoImpl
 {
-    public class UserRepoImpl : IUserRepo
+    public class UserImplementationRL : IUserRepo
     {
         private readonly DapperContext context;
-        private readonly ILogger<UserRepoImpl> _logger;
-        public UserRepoImpl(DapperContext context, ILogger<UserRepoImpl> logger)
+        private readonly ILogger<UserImplementationRL> _logger;
+        public UserImplementationRL(DapperContext context, ILogger<UserImplementationRL> logger)
         {
             this.context = context;
             _logger = logger;

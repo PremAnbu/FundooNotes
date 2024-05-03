@@ -17,11 +17,11 @@ using RepositaryLayer.GlobalCustomException;
 
 namespace RepositaryLayer.Repositary.RepoImpl
 {
-    public class NotesRepoImpl : INotesRepo
+    public class NotesImplementationRL : INotesRepo
     {
         private readonly DapperContext context;
-        private readonly ILogger<NotesRepoImpl> _logger;
-        public NotesRepoImpl(DapperContext context, ILogger<NotesRepoImpl> logger)
+        private readonly ILogger<NotesImplementationRL> _logger;
+        public NotesImplementationRL(DapperContext context, ILogger<NotesImplementationRL> logger)
         {
             this.context = context;
             _logger = logger;
@@ -173,6 +173,94 @@ namespace RepositaryLayer.Repositary.RepoImpl
                 throw;
             }
         }
+
+        public int UpdateNoteColour(int noteId, int userId, string colour)
+        {
+            try
+            {
+                var selectQuery = "SELECT UserNotesId FROM UserNotes WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
+
+                using (var connection = context.CreateConnection())
+                {
+                    var currentNoteId = connection.QueryFirstOrDefault<int>(selectQuery, new { UserId = userId, UserNotesId = noteId });
+                    if (currentNoteId == 0)
+                    {
+                        _logger.LogError("Note not found");
+                        throw new FileNotFoundException("Note not found");
+                    }
+
+                    var updateQuery = "UPDATE UserNotes SET Colour = @Colour WHERE UserNotesId = @UserNotesId AND UserId = @UserId";
+                    var parameters = new { UserId = userId, UserNotesId = noteId, Colour = colour };
+
+                    return connection.Execute(updateQuery, parameters);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred in the repository layer");
+                throw;
+            }
+        }
+
+        public int UpdateArchive(int noteId, int userId)
+        {
+            try
+            {
+                var selectQuery = "SELECT UserNotesId FROM UserNotes WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
+
+                using (var connection = context.CreateConnection())
+                {
+                    var currentNoteId = connection.QueryFirstOrDefault<int>(selectQuery, new { UserId = userId, UserNotesId = noteId });
+                    if (currentNoteId == 0)
+                    {
+                        _logger.LogError("Note not found");
+                        throw new FileNotFoundException("Note not found");
+                    }
+                    var updateQuery = "UPDATE UserNotes SET IsArchived = CASE WHEN IsArchived  = 0 THEN 1 ELSE 0 END WHERE UserNotesId = @UserNotesId AND UserId = @UserId";
+                    var parameters = new { UserId = userId, UserNotesId = noteId };
+
+                    return connection.Execute(updateQuery, parameters);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred in the repository layer");
+                throw;
+            }
+        }
+
+        public int UpdateTrash(int noteId, int userId)
+        {
+            try
+            {
+                var selectQuery = "SELECT UserNotesId FROM UserNotes WHERE UserId = @UserId AND UserNotesId = @UserNotesId";
+
+                using (var connection = context.CreateConnection())
+                {
+                    var currentNote = connection.QueryFirstOrDefault<int>(selectQuery, new { UserId = userId, UserNotesId = noteId });
+
+                    if (currentNote == null)
+                    {
+                        _logger.LogError("Note not found");
+                        throw new FileNotFoundException("Note not found");
+                    }
+
+                    var updateQuery = "UPDATE UserNotes SET IsDeleted = CASE WHEN IsDeleted = 0 THEN 1 ELSE 0 END WHERE UserNotesId = @UserNotesId AND UserId = @UserId";
+
+                    var parameters = new { UserId = userId, UserNotesId = noteId };
+
+                    return connection.Execute(updateQuery, parameters);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred in the repository layer");
+                throw;
+            }
+        }
+
+
+
 
         //private async Task<int> GetUserIdByEmailAsync(string email)
         //{

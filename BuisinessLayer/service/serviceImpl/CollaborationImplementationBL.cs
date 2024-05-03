@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace BuisinessLayer.service.serviceImpl
 {
-    public class CollaborationServiceImpl : ICollaborationService
+    public class CollaborationImplementationBL : ICollaboration          
     {
         private readonly ICollaborationRepo collaborationRL;
 
-        public CollaborationServiceImpl(ICollaborationRepo collaborationRL)
+        public CollaborationImplementationBL(ICollaborationRepo collaborationRL)
         {
             this.collaborationRL = collaborationRL;
         }

@@ -28,9 +28,9 @@ namespace FundooNotes.Controllers
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var result =  service.CreateNewLabel(labelName, notesId, userId);
             if (result==1)
-                return new ResponceStructure<string>(200,"Label Created successfully.");
+                return new ResponceStructure<string>("Label Created successfully.");
             else
-                return new ResponceStructure<string>(500, "Label Created successfully.");
+                return new ResponceStructure<string>( "Label Created successfully.");
         }
 
         [HttpPut]
@@ -39,9 +39,9 @@ namespace FundooNotes.Controllers
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var result = service.UpdateLabelName(labelName,newLabelName,noteId,userId);
             if (result == 1)
-                return new ResponceStructure<string>(200,"Label Name Updated  successfully.");
+                return new ResponceStructure<string>("Label Name Updated  successfully.");
             else
-                return new ResponceStructure<string>(500,"Failed to Update  Label Name");
+                return new ResponceStructure<string>("Failed to Update  Label Name");
         }
 
         [HttpDelete]
@@ -50,9 +50,9 @@ namespace FundooNotes.Controllers
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var result =  service.DeleteLabel(labelName,noteId,userId);
             if (result == 1)
-                return new ResponceStructure<string>(200,"Label Deleted successfully.");
+                return new ResponceStructure<string>("Label Deleted successfully.");
             else
-                return new ResponceStructure<string>(500,"Failed to Delete Label.");
+                return new ResponceStructure<string>("Failed to Delete Label.");
         }
 
         [HttpGet("GetLabel")]
@@ -60,7 +60,7 @@ namespace FundooNotes.Controllers
         {
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
             var label =  service.GetLabel(userId);
-            return new ResponceStructure<List<LabelResponce>>(200,label);
+            return new ResponceStructure<List<LabelResponce>>(label);
 
         }
     }

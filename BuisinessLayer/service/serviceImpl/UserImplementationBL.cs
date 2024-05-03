@@ -15,13 +15,13 @@ using System.Threading.Tasks;
 
 namespace BuisinessLayer.service.serviceImpl
 {
-    public class UserServiceImpl : IUserService
+    public class UserImplementationBL : Iservice.IUser
     {
         private readonly IUserRepo UserRepo;
         private static string otp;
         private static string mailid;
         private static UserEntity entity;
-        public UserServiceImpl(IUserRepo UserRepo)
+        public UserImplementationBL(IUserRepo UserRepo)
         {
             this.UserRepo = UserRepo;
         }
@@ -123,7 +123,7 @@ namespace BuisinessLayer.service.serviceImpl
            
             if (Regex.IsMatch(password, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[a-zA-Z\d!@#$%^&*]{8,16}$"))
             {
-                if (UserServiceImpl.otp.Equals(otp))
+                if (UserImplementationBL.otp.Equals(otp))
                 {
                    if( UserRepo.UpdatePassword(mailid,Encrypt(password))==1)
                     {

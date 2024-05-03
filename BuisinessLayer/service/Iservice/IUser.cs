@@ -9,7 +9,7 @@ using RepositaryLayer.DTO.RequestDto;
 
 namespace BuisinessLayer.service.Iservice
 {
-    public interface IUserService
+    public interface IUser
     {
         public int createUser(UserRequest request);
         public UserResponce Login(String Email, String password);
